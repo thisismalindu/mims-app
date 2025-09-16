@@ -1,0 +1,200 @@
+/* === Reset === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  height: 100%;
+  background-color: #f4f6f9;
+  color: #333;
+}
+
+/* === Layout === */
+.dashboard {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* === Sidebar === */
+.sidebar {
+  width: 240px;
+  background-color: #1f2937;
+  color: #ffffff;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #60a5fa;
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  color: #cbd5e1;
+  font-size: 1rem;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.menu-btn:hover {
+  background-color: #374151;
+  color: #ffffff;
+}
+
+.menu-btn.active {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+/* === Main Content === */
+.main {
+  flex-grow: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.page-title {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #1e293b;
+}
+
+/* === Top Section === */
+.top-section {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.cards-column {
+  flex: 2;
+}
+
+.chart-column {
+  flex: 1;
+  min-width: 280px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.card h2 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: #4b5563;
+}
+
+.card p {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #111827;
+}
+
+/* === Chart Box === */
+.chart-box {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  min-height: 300px;
+}
+
+/* === Bar Chart Section === */
+.bar-chart-section {
+  margin-top: 2rem;
+}
+
+/* === Transactions Section === */
+.transactions-section {
+  margin-top: 2rem;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.transactions-section h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #1e293b;
+}
+
+.transactions-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.transactions-table th,
+.transactions-table td {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.95rem;
+}
+
+.transactions-table th {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.transactions-table tr:hover {
+  background-color: #f9fafb;
+}
+
+/* === Scrollbar Styling === */
+.main::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+/* In Dashboard.css */
+.tx-type.deposit {
+  color: green;
+  font-weight: 500;
+}
+
+.tx-type.withdrawal {
+  color: red;
+  font-weight: 500;
+}
