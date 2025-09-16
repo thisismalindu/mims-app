@@ -39,19 +39,6 @@ export default function Customers() {
                         { label: "Last Name", id: "lastname", name: "last_name", type: "text", required: true },
                         { label: "NIC", id: "nic", name: "nic_number", type: "text", required: true },
                         { label: "Date of Birth", id: "dob", name: "date_of_birth", type: "date", required: true },
-                        // {
-                        //     label: "Gender",
-                        //     id: "gender",
-                        //     name: "gender",
-                        //     type: "select",
-                        //     required: true,
-                        //     options: [
-                        //         { value: "", label: "Select" },
-                        //         { value: "male", label: "Male" },
-                        //         { value: "female", label: "Female" },
-                        //         { value: "other", label: "Other" }
-                        //     ]
-                        // },
                         { label: "Address", id: "address", name: "address", type: "text", required: true },
                         { label: "Phone Number", id: "phonenumber", name: "phone_number", type: "tel", required: true },
                         { label: "Email", id: "email", name: "email", type: "email", required: true },
