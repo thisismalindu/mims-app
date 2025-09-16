@@ -24,7 +24,7 @@ export default function DashboardView() {
       <div className="top-section">
         <div className="stats-grid">
           <div className="card">
-            <h2 className="text-red-700">Total Customers</h2>
+            <h2>Total Customers</h2>
             <p>{stats.totalCustomers}</p>
           </div>
           <div className="card">
