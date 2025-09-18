@@ -23,6 +23,7 @@ export default function LoginPage() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ username, password }),
+
             });
 
             if (!response.ok) {
@@ -31,8 +32,10 @@ export default function LoginPage() {
                 return;
             }
 
+            alert('Login successful!');
             // Redirect or handle successful login
             window.location.href = '/';
+
         } catch (err) {
             setError('An error occurred. Please try again.');
         }

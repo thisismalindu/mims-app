@@ -1,8 +1,8 @@
 // page.js
 "use client";
 
-import React, { useState } from "react";
-import { Home, Users, Banknote, Settings, FileText } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Home, Users, Banknote, Settings, FileText, LogOut } from "lucide-react";
 
 import Dashboard from "./components/Dashboard";
 import Customers from "./components/Customers";
@@ -20,6 +20,24 @@ export default function Page() {
     { name: "Transactions", icon: <FileText size={20} /> },
     { name: "Settings", icon: <Settings size={20} /> },
   ];
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        console.error("Logout failed server side", await response.text());
+      }
+    } catch (err) {
+      console.error("Logout request error", err);
+    }
+
+    // Hard redirect to login to clear client state and ensure middleware runs
+    window.location.replace("/login");
+  };
 
   const renderPage = () => {
     switch (activePage) {
@@ -42,6 +60,7 @@ export default function Page() {
     }
   };
 
+  // Main content
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100 text-gray-900">
       {/* Sidebar */}
@@ -49,7 +68,7 @@ export default function Page() {
         <div className="text-2xl font-bold mb-10 text-center text-blue-400">
           MIMS
         </div>
-        <nav className="flex flex-col gap-2">
+        <nav className="flex flex-col gap-2 flex-grow">
           {menuItems.map((item) => (
             <button
               key={item.name}
@@ -66,6 +85,15 @@ export default function Page() {
             </button>
           ))}
         </nav>
+
+        {/* Logout button */}
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm font-medium text-gray-300 hover:bg-red-600 hover:text-white mt-4"
+        >
+          <LogOut size={20} />
+          Logout
+        </button>
       </aside>
 
       {/* Main Content */}
