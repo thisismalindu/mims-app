@@ -1,9 +1,14 @@
 "use client";
-
+import React, { useState } from "react";
 
 export default function CreateCustomer({changePage}) {
+
+    const [loading, setLoading] = useState(false);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
+
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
 
@@ -28,6 +33,8 @@ export default function CreateCustomer({changePage}) {
             e.target.reset();
         } catch (error) {
             alert(error.message);
+        } finally {
+            setLoading(false); // re-enable button after response
         }
     };
 
@@ -84,7 +91,12 @@ export default function CreateCustomer({changePage}) {
                     <p className="text-sm/6 my-4 italic text-red-500 ">* Required fields</p>
                 </div>
 
-                <button type="submit" className={"flex w-full justify-center rounded-md px-3 py-1.5 text-sm/6 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 bg-blue-500 hover:bg-blue-400 cursor-pointer"} >Add Customer</button>
+                <button 
+                type="submit" 
+                disabled={loading}
+                className={`flex w-full justify-center rounded-md px-3 py-1.5 text-sm/6 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-400"
+                                } cursor-pointer`} >
+                            {loading ? "Adding Customer..." : "Add Customer"}</button>
             </form>
         </div>
     );
