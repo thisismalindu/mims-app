@@ -1,162 +1,281 @@
--- 1. Branches
+-- ============================================================
+-- ENUM TYPES
+-- ============================================================
+
+CREATE TYPE status_enum AS ENUM (
+  'active',
+  'inactive'
+);
+
+CREATE TYPE user_type AS ENUM (
+  'admin',
+  'agent',
+  'manager'
+);
+
+CREATE TYPE gender_type AS ENUM (
+  'male',
+  'female',
+  'other'
+);
+
+CREATE TYPE ownership_type AS ENUM (
+  'primary',
+  'joint'
+);
+
+CREATE TYPE duration_months AS ENUM (
+  '6_months',
+  '12_months',
+  '36_months'
+);
+
+CREATE TYPE transaction_type_enum AS ENUM (
+  'deposit',
+  'withdrawal',
+  'interest'
+);
+
+CREATE TYPE report_type_enum AS ENUM (
+  'customer_summary',
+  'transaction_history',
+  'fixed_deposit_summary',
+  'audit'
+);
+
+CREATE TYPE report_status AS ENUM (
+  'completed',
+  'failed',
+  'archived'
+);
+
+-- ============================================================
+-- TABLES
+-- ============================================================
+
 CREATE TABLE branch (
-    branch_id SERIAL PRIMARY KEY,
-    branch_code VARCHAR(10) UNIQUE NOT NULL,
-    branch_name VARCHAR(100) NOT NULL,
-    address TEXT NOT NULL,
-    phone_number VARCHAR(15) NOT NULL,
-    status VARCHAR(20) DEFAULT 'active',
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  branch_id BIGSERIAL PRIMARY KEY,
+  branch_name text UNIQUE NOT NULL,
+  address text,
+  phone_number text,
+  status status_enum NOT NULL DEFAULT 'active',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- 2. Administrators (System Admins)
-CREATE TABLE administrator (
-    admin_id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    phone_number VARCHAR(15) NOT NULL,
-    role VARCHAR(20) DEFAULT 'admin',
-    status VARCHAR(20) DEFAULT 'active',
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE users (
+  user_id BIGSERIAL PRIMARY KEY,
+  username text UNIQUE NOT NULL,
+  password_hash text NOT NULL,
+  role user_type NOT NULL,
+  status status_enum NOT NULL DEFAULT 'active',
+  email text UNIQUE,
+  created_by_user_id BIGINT REFERENCES users(user_id),
+  branch_id BIGINT REFERENCES branch(branch_id),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- 3. Employers (Agents & Managers)
-CREATE TABLE employer (
-    employer_id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    role VARCHAR(20) NOT NULL CHECK (role IN ('agent', 'manager')),
-    phone_number VARCHAR(15) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    status VARCHAR(20) DEFAULT 'active',
-    branch_id INTEGER NOT NULL REFERENCES branch(branch_id),
-    created_by_admin_id INTEGER NOT NULL REFERENCES administrator(admin_id),
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE login_log (
+  login_id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users(user_id),
+  username_used text NOT NULL,
+  success boolean NOT NULL,
+  ip_address text,
+  user_agent text,
+  logged_in_at timestamptz DEFAULT now()
 );
 
--- 4. Account Plans (Savings Account Types)
-CREATE TABLE account_plan (
-    plan_id SERIAL PRIMARY KEY,
-    plan_name VARCHAR(50) UNIQUE NOT NULL,
-    min_balance DECIMAL(15, 2) NOT NULL,
-    interest_rate DECIMAL(5, 2) NOT NULL,
-    status VARCHAR(20) DEFAULT 'active',
-    description TEXT,
-    last_update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 5. Customers
 CREATE TABLE customer (
-    customer_id SERIAL PRIMARY KEY,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    nic_number VARCHAR(20) UNIQUE NOT NULL,
-    date_of_birth DATE NOT NULL,
-    phone_number VARCHAR(15),
-    address TEXT NOT NULL,
-    email VARCHAR(100),
-    status VARCHAR(20) DEFAULT 'active',
-    created_by_agent_id INTEGER NOT NULL REFERENCES employer(employer_id),
-    registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  customer_id BIGSERIAL PRIMARY KEY,
+  first_name text,
+  last_name text,
+  nic_number text UNIQUE,
+  gender gender_type,
+  address text,
+  phone_number text,
+  email text,
+  date_of_birth date,
+  status status_enum DEFAULT 'active',
+  created_by_user_id BIGINT REFERENCES users(user_id),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- 6. Savings Accounts
+CREATE TABLE savings_account_plan (
+  savings_account_plan_id BIGSERIAL PRIMARY KEY,
+  name text UNIQUE NOT NULL,
+  min_balance_required NUMERIC(30,10) DEFAULT 0,
+  minimum_age_required integer,
+  interest_rate NUMERIC(12,6),
+  description text,
+  status status_enum DEFAULT 'active',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
 CREATE TABLE savings_account (
-    account_id SERIAL PRIMARY KEY,
-    account_number VARCHAR(20) UNIQUE NOT NULL,
-    current_balance DECIMAL(15, 2) DEFAULT 0.00,
-    account_plan_id INTEGER NOT NULL REFERENCES account_plan(plan_id),
-    branch_id INTEGER NOT NULL REFERENCES branch(branch_id),
-    status VARCHAR(20) DEFAULT 'active',
-    created_by_agent_id INTEGER NOT NULL REFERENCES employer(employer_id),
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  savings_account_id BIGSERIAL PRIMARY KEY,
+  savings_account_plan_id BIGINT REFERENCES savings_account_plan(savings_account_plan_id),
+  balance NUMERIC(30,10) DEFAULT 0,
+  branch_id BIGINT REFERENCES branch(branch_id),
+  status status_enum DEFAULT 'active',
+  created_by_user_id BIGINT REFERENCES users(user_id),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- 7. Customer Account Link (for Joint Accounts)
+CREATE TABLE fixed_deposit_account_plan (
+  fixed_deposit_account_plan_id BIGSERIAL PRIMARY KEY,
+  name text UNIQUE NOT NULL,
+  duration duration_months,
+  interest_rate NUMERIC(12,6),
+  minimum_amount_required NUMERIC(30,10),
+  description text,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE TABLE fixed_deposit_account (
+  fixed_deposit_account_id BIGSERIAL PRIMARY KEY,
+  savings_account_id BIGINT REFERENCES savings_account(savings_account_id),
+  fixed_deposit_account_plan_id BIGINT REFERENCES fixed_deposit_account_plan(fixed_deposit_account_plan_id),
+  amount NUMERIC(30,10) NOT NULL,
+  start_date date,
+  next_interest_date date,
+  closing_date date,
+  status status_enum DEFAULT 'active',
+  created_by_user_id BIGINT REFERENCES users(user_id),
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
 CREATE TABLE customer_account (
-    customer_account_id SERIAL PRIMARY KEY,
-    customer_id INTEGER NOT NULL REFERENCES customer(customer_id),
-    account_id INTEGER NOT NULL REFERENCES savings_account(account_id),
-    ownership_type VARCHAR(20) DEFAULT 'primary',
-    added_date DATE DEFAULT CURRENT_DATE
+  customer_account_id BIGSERIAL PRIMARY KEY,
+  customer_id BIGINT REFERENCES customer(customer_id) NOT NULL,
+  savings_account_id BIGINT REFERENCES savings_account(savings_account_id) NOT NULL,
+  ownership ownership_type,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- 8. Fixed Deposit Plans
-CREATE TABLE fixed_deposit_plan (
-    fd_plan_id SERIAL PRIMARY KEY,
-    plan_name VARCHAR(50) UNIQUE NOT NULL,
-    duration VARCHAR(20) NOT NULL CHECK (duration IN ('6_months', '1_year', '3_years')),
-    interest_rate DECIMAL(5, 2) NOT NULL,
-    minimum_amount DECIMAL(15, 2) NOT NULL,
-    description TEXT
+CREATE TABLE transaction (
+  transaction_id BIGSERIAL PRIMARY KEY,
+  savings_account_id BIGINT REFERENCES savings_account(savings_account_id),
+  fixed_deposit_account_id BIGINT REFERENCES fixed_deposit_account(fixed_deposit_account_id),
+  transaction_type transaction_type_enum NOT NULL,
+  amount NUMERIC(30,10) NOT NULL,
+  transaction_time timestamptz DEFAULT now(),
+  performed_by_user_id BIGINT REFERENCES users(user_id),
+  status status_enum DEFAULT 'active',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  CONSTRAINT transaction_account_check CHECK (
+    (savings_account_id IS NOT NULL)::int +
+    (fixed_deposit_account_id IS NOT NULL)::int = 1
+  )
 );
 
--- 9. Fixed Deposits
-CREATE TABLE fixed_deposit (
-    fd_id SERIAL PRIMARY KEY,
-    savings_account_id INTEGER NOT NULL REFERENCES savings_account(account_id),
-    fd_plan_id INTEGER NOT NULL REFERENCES fixed_deposit_plan(fd_plan_id),
-    amount DECIMAL(15, 2) NOT NULL,
-    start_date DATE NOT NULL,
-    next_interest_date DATE NOT NULL,
-    status VARCHAR(20) DEFAULT 'active',
-    created_by_agent_id INTEGER NOT NULL REFERENCES employer(employer_id),
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 10. Transactions (renamed from transaction to avoid reserved keyword issues)
-CREATE TABLE transactions (
-    transaction_id SERIAL PRIMARY KEY,
-    account_id INTEGER NOT NULL REFERENCES savings_account(account_id),
-    transaction_type VARCHAR(20) NOT NULL CHECK (transaction_type IN ('deposit', 'withdrawal', 'interest')),
-    amount DECIMAL(15, 2) NOT NULL,
-    transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    performed_by_agent_id INTEGER NOT NULL REFERENCES employer(employer_id),
-    status VARCHAR(20) DEFAULT 'completed',
-    reference_number VARCHAR(100)
-);
-
--- 11. Login Details
-CREATE TABLE login_details (
-    user_id SERIAL PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(20) DEFAULT 'user', -- can be admin/employer/customer
-    last_updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 12. Login History
-CREATE TABLE login (
-    login_id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES login_details(user_id),
-    last_login_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 13. Reports
 CREATE TABLE report (
-    report_id SERIAL PRIMARY KEY,
-    report_type VARCHAR(50) NOT NULL,
-    requested_by_employer_id INTEGER NOT NULL REFERENCES employer(employer_id),
-    generated_date DATE DEFAULT CURRENT_DATE,
-    date_range VARCHAR(100),
-    description TEXT,
-    file_path VARCHAR(500),
-    status VARCHAR(20) DEFAULT 'completed'
+  report_id BIGSERIAL PRIMARY KEY,
+  report_type report_type_enum,
+  requested_by_user_id BIGINT REFERENCES users(user_id),
+  generated_by_user_id BIGINT REFERENCES users(user_id),
+  generated_time timestamptz DEFAULT now(),
+  date_range daterange,
+  description text,
+  file_path text,
+  status report_status,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
 );
 
--- 14. Logs/Audit Table
 CREATE TABLE audit_log (
-    audit_id SERIAL PRIMARY KEY,
-    employer_id INTEGER REFERENCES employer(employer_id),
-    admin_id INTEGER REFERENCES administrator(admin_id),
-    table_name VARCHAR(100) NOT NULL,
-    record_id INTEGER,
-    operation VARCHAR(200) NOT NULL,
-    old_value JSONB,
-    new_value JSONB,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  audit_log_id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users(user_id),
+  table_name text,
+  operation text,
+  row_before jsonb,
+  row_after jsonb,
+  created_at timestamptz DEFAULT now()
 );
 
--- Indexes for performance
-CREATE INDEX idx_customer_nic ON customer(nic_number);
-CREATE INDEX idx_savings_account_number ON savings_account(account_number);
-CREATE INDEX idx_transaction_account_id ON transactions(account_id);
+-- ============================================================
+-- TRIGGERS
+-- ============================================================
+
+-- Updated_at trigger
+CREATE OR REPLACE FUNCTION trigger_set_updated_at()
+RETURNS trigger AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Attach updated_at triggers
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOR t IN
+    SELECT tablename FROM pg_tables
+    WHERE schemaname = 'public'
+      AND tablename NOT IN ('login_log','audit_log')
+  LOOP
+    EXECUTE format(
+      'CREATE TRIGGER %I_set_updated_at
+       BEFORE UPDATE ON %I
+       FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at()',
+      t, t
+    );
+  END LOOP;
+END$$;
+
+-- Audit trigger
+CREATE OR REPLACE FUNCTION audit_trigger_fn()
+RETURNS trigger AS $$
+DECLARE
+  current_user_id BIGINT;
+BEGIN
+  BEGIN
+    current_user_id := current_setting('app.current_user_id')::BIGINT;
+  EXCEPTION WHEN others THEN
+    current_user_id := NULL;
+  END;
+
+  IF TG_OP = 'INSERT' THEN
+    INSERT INTO audit_log(user_id, table_name, operation, row_after)
+    VALUES (current_user_id, TG_TABLE_NAME, TG_OP, row_to_json(NEW)::jsonb);
+    RETURN NEW;
+  ELSIF TG_OP = 'UPDATE' THEN
+    INSERT INTO audit_log(user_id, table_name, operation, row_before, row_after)
+    VALUES (current_user_id, TG_TABLE_NAME, TG_OP, row_to_json(OLD)::jsonb, row_to_json(NEW)::jsonb);
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    INSERT INTO audit_log(user_id, table_name, operation, row_before)
+    VALUES (current_user_id, TG_TABLE_NAME, TG_OP, row_to_json(OLD)::jsonb);
+    RETURN OLD;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Attach audit triggers
+DO $$
+DECLARE
+  t text;
+BEGIN
+  FOR t IN
+    SELECT tablename FROM pg_tables
+    WHERE schemaname = 'public'
+      AND tablename NOT IN ('login_log','audit_log')
+  LOOP
+    EXECUTE format(
+      'CREATE TRIGGER %I_audit
+       AFTER INSERT OR UPDATE OR DELETE ON %I
+       FOR EACH ROW EXECUTE FUNCTION audit_trigger_fn()',
+      t, t
+    );
+  END LOOP;
+END$$;
