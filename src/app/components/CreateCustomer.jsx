@@ -88,7 +88,7 @@ export default function CreateCustomer({changePage}) {
                 }
 
                 <div>
-                    <p className="text-sm/6 my-4 italic text-green-600">* Required fields</p>
+                    <p className="text-sm/6 my-4 italic text-red-500">* Required fields</p>
                 </div>
 
                 <button 
