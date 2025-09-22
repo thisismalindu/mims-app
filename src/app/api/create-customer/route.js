@@ -1,4 +1,5 @@
 import { query } from '@/lib/database';
+import { getCurrentUser } from '../utils/get-user';
 
 export async function POST(request) {
   try {
@@ -12,7 +13,6 @@ export async function POST(request) {
       phone_number,
       address,
       email,
-      // created_by_agent_id,
     } = data;
 
     // Validate required fields
@@ -21,14 +21,19 @@ export async function POST(request) {
       !last_name ||
       !nic_number ||
       !date_of_birth ||
-      !address //||
-      // !created_by_agent_id
+      !address
     ) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }
+    
+    console.log("****/api/create-customer/: currentUser: ", await getCurrentUser(request));
+
+    const user = await getCurrentUser(request);
+    const created_by_user_id = user?.userID;
+
 
     // Insert into the customer table
     const result = await query(
@@ -44,7 +49,7 @@ export async function POST(request) {
         phone_number || null,
         address,
         email || null,
-        5
+        created_by_user_id || null,
       ]
     );
 
