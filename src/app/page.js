@@ -9,9 +9,24 @@ import Customers from "./components/Customers";
 import Accounts from "./components/Accounts";
 import Transactions from "./components/Transactions";
 import SettingsPage from "./components/SettingsPage";
+import CreateCustomer from "./components/CreateCustomer";
 
 export default function Page() {
+  
   const [activePage, setActivePage] = useState("Dashboard");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const page = params.get("page")
+    if (page) setActivePage(page)
+  }, [])
+
+  const changePage = (page) => {
+    setActivePage(page)
+    const params = new URLSearchParams(window.location.search)
+    params.set("page", page)
+    window.history.pushState({}, "", "?" + params.toString())
+  }
 
   const menuItems = [
     { name: "Dashboard", icon: <Home size={20} /> },
@@ -42,7 +57,7 @@ export default function Page() {
   const renderPage = () => {
     switch (activePage) {
       case "Dashboard":
-        return <Dashboard />;
+        return <Dashboard changePage={changePage} />;
       case "Customers":
         return <Customers />;
       case "Accounts":
@@ -51,6 +66,8 @@ export default function Page() {
         return <Transactions />;
       case "Settings":
         return <SettingsPage />;
+      case "CreateCustomer":
+        return <CreateCustomer changePage={changePage} />;
       default:
         return (
           <div className="bg-white rounded-lg p-6 shadow text-gray-700">
@@ -72,12 +89,11 @@ export default function Page() {
           {menuItems.map((item) => (
             <button
               key={item.name}
-              onClick={() => setActivePage(item.name)}
+              onClick={() => changePage(item.name)}
               className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm font-medium
-                ${
-                  activePage === item.name
-                    ? "bg-blue-600 text-white"
-                    : "text-gray-300 hover:bg-gray-700 hover:text-white"
+                ${activePage === item.name
+                  ? "bg-blue-500 text-white"
+                  : "text-gray-300 hover:bg-gray-700 hover:text-white"
                 }`}
             >
               <span>{item.icon}</span>
@@ -98,7 +114,7 @@ export default function Page() {
 
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">{activePage}</h1>
+        {/* <h1 className="text-3xl font-bold mb-8 text-gray-800">{activePage}</h1> */}
         {renderPage()}
       </main>
     </div>
