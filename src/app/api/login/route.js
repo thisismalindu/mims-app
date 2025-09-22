@@ -4,21 +4,30 @@ import bcrypt from 'bcrypt';
 import { SignJWT } from 'jose';
 import { NextResponse } from 'next/server';
 
+async function logFailedLoginAttempt(username) {
+    await query(
+        'INSERT INTO login_log (username_used, success) VALUES ($1, $2)',
+        [username, false]
+    );
+}
+
 export async function POST(request) {
     const { username, password } = await request.json();
 
     const result = await query(
-        'SELECT * FROM login_details WHERE username = $1',
+        'SELECT * FROM users WHERE username = $1',
         [username]
     );
     const login = result.rows[0];
 
     if (!login) {
+        await logFailedLoginAttempt(username);
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
     const isPasswordValid = await bcrypt.compare(password, login.password_hash);
     if (!isPasswordValid) {
+        await logFailedLoginAttempt(username);
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
@@ -46,8 +55,8 @@ export async function POST(request) {
     console.log('userid: ', login.user_id);
 
     await query(
-        'INSERT INTO login (user_id) VALUES ($1)',
-        [login.user_id]
+        'INSERT INTO login_log (user_id, username_used, success) VALUES ($1, $2, $3)',
+        [login.user_id, username, true]
     );
 
     return response;

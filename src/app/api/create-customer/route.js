@@ -33,9 +33,9 @@ export async function POST(request) {
     // Insert into the customer table
     const result = await query(
       `INSERT INTO customer 
-        (first_name, last_name, nic_number, date_of_birth, phone_number, address, email, created_by_agent_id)
+        (first_name, last_name, nic_number, date_of_birth, phone_number, address, email, created_by_user_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING customer_id, registration_date`,
+       RETURNING customer_id`,
       [
         first_name,
         last_name,
@@ -44,7 +44,7 @@ export async function POST(request) {
         phone_number || null,
         address,
         email || null,
-        2
+        5
       ]
     );
 
