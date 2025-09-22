@@ -21,6 +21,7 @@ export default function Dashboard({ changePage }) {
   }, []);
 
 
+  // get user data
   const [user, setUser] = useState(null)
 
   useEffect(() => {
@@ -34,6 +35,7 @@ export default function Dashboard({ changePage }) {
     fetchUser()
   }, [])
 
+  // define role colors
   const roleColors = {
     admin: 'bg-red-400',
     manager: 'bg-green-500',
@@ -49,6 +51,7 @@ export default function Dashboard({ changePage }) {
           Welcome, {user.username}!
           </h2>
           <p className={`ml-4 text-white rounded-lg ${roleColors[user.role]} text-[8px] font-bold tracking-wide py-0.5 px-2`}>{user.role.toUpperCase()}</p>
+          {/* {user.role === 'admin' && (<div> is admin </div>)} */ /* how to create UI dynamically */}
         </div>
         ) : (<p>Loading...</p>)}
 
