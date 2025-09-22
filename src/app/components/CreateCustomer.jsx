@@ -57,7 +57,10 @@ export default function CreateCustomer({changePage}) {
                     ]
                         .map(field => (
                             <div key={field.id} className='flex  flex-col mb-4'>
-                                <label className="block text-sm/6 font-medium text-gray-400" htmlFor={field.id}>{field.label}:</label>
+                                <div className="flex items-center">
+                                    <label className="text-sm/6 font-medium text-gray-400" htmlFor={field.id}>{field.label}:</label>
+                                    {field.required ? <p className="text-red-500 font-medium">*</p> : <></>}
+                                </div>
                                 {field.type === "select" ? (
                                     <select id={field.id} name={field.name} required={field.required}>
                                         {field.options.map(opt => (
@@ -76,6 +79,10 @@ export default function CreateCustomer({changePage}) {
                             </div>
                         ))
                 }
+
+                <div>
+                    <p className="text-sm/6 my-4 italic text-red-500 ">* Required fields</p>
+                </div>
 
                 <button type="submit" className={"flex w-full justify-center rounded-md px-3 py-1.5 text-sm/6 font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 bg-blue-500 hover:bg-blue-400 cursor-pointer"} >Add Customer</button>
             </form>
