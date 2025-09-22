@@ -279,3 +279,7 @@ BEGIN
     );
   END LOOP;
 END$$;
+
+-- root user
+INSERT INTO users (username, password_hash, role, status)
+VALUES ('root', '$2b$10$LG206ujTzZxeIdIQdEbmluSMNsq0d5RrJNtfxPg8Nvz04u6xWmE36', 'admin', 'active');
