@@ -2,9 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-// import { Home, Users, Banknote, Settings, FileText, LogOut } from "lucide-react";
-import { HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTextIcon, ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline'
-
+import {UserIcon, HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTextIcon, ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline'
 
 import Dashboard from "./components/Dashboard";
 import Customers from "./components/Customers";
@@ -48,6 +46,7 @@ export default function Page() {
     { name: "Accounts", icon: <BanknotesIcon /> },
     { name: "Transactions", icon: <DocumentTextIcon /> },
     { name: "Settings", icon: <Cog6ToothIcon /> },
+    { name: "Profile", icon: <UserIcon /> },
   ];
 
   const handleLogout = async () => {
@@ -96,12 +95,12 @@ export default function Page() {
     <div className="flex h-screen overflow-hidden bg-gray-100 text-gray-900">
       {/* Sidebar */}
       <aside className="w-60 bg-gray-900 text-white flex flex-col py-6">
-        <div className=" text-gray-500 text-sm/6 pb-5 border-b border-gray-800 px-6">
+        <a href="/" className=" text-gray-500 text-sm/6 pb-5 border-b border-gray-800 px-6 cursor-pointer">
           <h2 className="text-gray-200 text-2xl font-bold mb-2">B-Trust</h2>
           <p>
             Microbanking and Interest Management System
           </p>
-        </div>
+        </a>
         <nav className="flex flex-col flex-grow">
           {menuItems.map((item) => (
             <button
@@ -122,7 +121,7 @@ export default function Page() {
         {/* Logout button */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-4 transition-colors text-sm font-medium text-gray-300 hover:bg-red-600 hover:text-white mt-4 border-y border-gray-800"
+          className="flex items-center gap-3 px-4 py-4 transition-colors text-sm font-medium text-gray-300 hover:bg-red-600 hover:text-white border-y border-gray-800"
         >
           <ArrowRightStartOnRectangleIcon className="size-4 text-gray-300" />
           Logout
@@ -131,7 +130,6 @@ export default function Page() {
 
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto">
-        {/* <h1 className="text-3xl font-bold mb-8 text-gray-800">{activePage}</h1> */}
         {renderPage()}
       </main>
     </div>
