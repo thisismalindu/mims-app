@@ -2,7 +2,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Home, Users, Banknote, Settings, FileText, LogOut } from "lucide-react";
+// import { Home, Users, Banknote, Settings, FileText, LogOut } from "lucide-react";
+import { HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTextIcon, ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline'
+
 
 import Dashboard from "./components/Dashboard";
 import Customers from "./components/Customers";
@@ -12,14 +14,26 @@ import SettingsPage from "./components/SettingsPage";
 import CreateCustomer from "./components/CreateCustomer";
 
 export default function Page() {
-  
-  const [activePage, setActivePage] = useState("Dashboard");
 
+  const [activePage, setActivePage] = useState("Dashboard");
+  
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const page = params.get("page")
-    if (page) setActivePage(page)
-  }, [])
+    const syncPageWithUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const page = params.get("page") || "Dashboard";
+      setActivePage(page);
+    };
+
+    // Run on mount
+    syncPageWithUrl();
+
+    // Listen for browser navigation
+    window.addEventListener("popstate", syncPageWithUrl);
+
+    return () => {
+      window.removeEventListener("popstate", syncPageWithUrl);
+    };
+  }, []);
 
   const changePage = (page) => {
     setActivePage(page)
@@ -29,11 +43,11 @@ export default function Page() {
   }
 
   const menuItems = [
-    { name: "Dashboard", icon: <Home size={20} /> },
-    { name: "Customers", icon: <Users size={20} /> },
-    { name: "Accounts", icon: <Banknote size={20} /> },
-    { name: "Transactions", icon: <FileText size={20} /> },
-    { name: "Settings", icon: <Settings size={20} /> },
+    { name: "Dashboard", icon: <HomeIcon /> },
+    { name: "Customers", icon: <UsersIcon /> },
+    { name: "Accounts", icon: <BanknotesIcon /> },
+    { name: "Transactions", icon: <DocumentTextIcon /> },
+    { name: "Settings", icon: <Cog6ToothIcon /> },
   ];
 
   const handleLogout = async () => {
@@ -81,22 +95,25 @@ export default function Page() {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100 text-gray-900">
       {/* Sidebar */}
-      <aside className="w-60 bg-gray-900 text-white flex flex-col p-6">
-        <div className="text-2xl font-bold mb-10 text-center text-blue-400">
-          MIMS
+      <aside className="w-60 bg-gray-900 text-white flex flex-col py-6">
+        <div className=" text-gray-500 text-sm/6 pb-5 border-b border-gray-800 px-6">
+          <h2 className="text-gray-200 text-2xl font-bold mb-2">B-Trust</h2>
+          <p>
+            Microbanking and Interest Management System
+          </p>
         </div>
-        <nav className="flex flex-col gap-2 flex-grow">
+        <nav className="flex flex-col flex-grow">
           {menuItems.map((item) => (
             <button
               key={item.name}
               onClick={() => changePage(item.name)}
-              className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm font-medium
+              className={`flex items-center gap-3 px-4 py-4 transition-colors text-sm font-medium border-b border-gray-800
                 ${activePage === item.name
                   ? "bg-blue-500 text-white"
                   : "text-gray-300 hover:bg-gray-700 hover:text-white"
                 }`}
             >
-              <span>{item.icon}</span>
+              <span className="size-4 text-gray-300">{item.icon}</span>
               {item.name}
             </button>
           ))}
@@ -105,9 +122,9 @@ export default function Page() {
         {/* Logout button */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-2 rounded-lg transition-colors text-sm font-medium text-gray-300 hover:bg-red-600 hover:text-white mt-4"
+          className="flex items-center gap-3 px-4 py-4 transition-colors text-sm font-medium text-gray-300 hover:bg-red-600 hover:text-white mt-4 border-y border-gray-800"
         >
-          <LogOut size={20} />
+          <ArrowRightStartOnRectangleIcon className="size-4 text-gray-300" />
           Logout
         </button>
       </aside>
