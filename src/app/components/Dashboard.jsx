@@ -34,14 +34,22 @@ export default function Dashboard({ changePage }) {
     fetchUser()
   }, [])
 
+  const roleColors = {
+    admin: 'bg-red-400',
+    manager: 'bg-green-500',
+    agent: 'bg-blue-400',
+  };
 
   return (
     <>
       {/* === Top Stats Section === */}
       {user ? (
-        <h2 className="my-10 text-gray-900 text-2xl/9 font-bold tracking-tight">
+        <div className="flex my-10 items-center">
+          <h2 className=" text-gray-900 text-2xl/9 font-bold tracking-tight">
           Welcome, {user.username}!
           </h2>
+          <p className={`ml-4 text-white rounded-lg ${roleColors[user.role]} text-[8px] font-bold tracking-wide py-0.5 px-2`}>{user.role.toUpperCase()}</p>
+        </div>
         ) : (<p>Loading...</p>)}
 
       <div className="flex flex-wrap gap-6 mb-8">
