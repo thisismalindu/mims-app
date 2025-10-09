@@ -2,147 +2,195 @@ import { query } from '@/lib/database';
 import pool from '@/lib/database';
 import { getCurrentUser } from '../utils/get-user';
 
+// GET for info
 export async function GET() {
-	return new Response(
-		JSON.stringify({ success: true, info: 'POST to this endpoint with account_number (or savings_account_id), amount, transaction_type (deposit|withdraw|interest)' }),
-		{ status: 200, headers: { 'Content-Type': 'application/json' } }
-	);
-}
-
-// Helper: check if savings_account has an account_number column
-async function hasAccountNumberColumn() {
-	const res = await query(
-		`SELECT column_name FROM information_schema.columns WHERE table_name = 'savings_account' AND column_name = 'account_number'`
-	);
-	return res.rows.length > 0;
+  return new Response(
+    JSON.stringify({
+      success: true,
+      info: 'POST to this endpoint with account_number (10 digits), amount, transaction_type (deposit|withdraw)',
+    }),
+    { status: 200, headers: { 'Content-Type': 'application/json' } }
+  );
 }
 
 export async function POST(request) {
-	try {
-		const contentType = (request.headers.get('content-type') || '').toLowerCase();
-		let data;
+  try {
+    const contentType = (request.headers.get('content-type') || '').toLowerCase();
+    let data;
 
-		if (contentType.includes('application/json')) {
-			data = await request.json();
-		} else {
-			const form = await request.formData();
-			data = Object.fromEntries(form.entries());
-		}
+    if (contentType.includes('application/json')) {
+      data = await request.json();
+    } else {
+      const form = await request.formData();
+      data = Object.fromEntries(form.entries());
+    }
 
-		const { account_number, savings_account_id, amount: amountRaw, transaction_type: txTypeRaw, description } = data;
+    const { account_number, amount: amountRaw, transaction_type: txTypeRaw, description } = data;
 
-		// validate
-		if ((!account_number && !savings_account_id) || !amountRaw || !txTypeRaw) {
-			return new Response(JSON.stringify({ success: false, error: 'Missing required fields: account_number or savings_account_id, amount, transaction_type' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-		}
+    // Basic validation
+    if (!account_number || !amountRaw || !txTypeRaw) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Missing required fields: account_number, amount, transaction_type' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-		const amount = Number(amountRaw);
-		if (Number.isNaN(amount) || amount <= 0) {
-			return new Response(JSON.stringify({ success: false, error: 'Amount must be a positive number' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-		}
+    const amount = Number(amountRaw);
+    if (Number.isNaN(amount) || amount <= 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Amount must be a positive number' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-		// map transaction type from frontend values to DB enum
-		const mapType = (v) => {
-			const t = String(v).toLowerCase();
-			if (t === 'withdraw' || t === 'withdrawal') return 'withdrawal';
-			if (t === 'deposit') return 'deposit';
-			if (t === 'interest') return 'interest';
-			return null;
-		};
+    // Validate account number format (10 digits)
+    if (!/^\d{10}$/.test(String(account_number).trim())) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid account number format. Expected 10 digits (3 for branch, 7 for account).' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-		const transaction_type = mapType(txTypeRaw);
-		if (!transaction_type) {
-			return new Response(JSON.stringify({ success: false, error: 'Invalid transaction_type' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-		}
+    // Extract branch_id and savings_account_id
+    const normalized = String(account_number).trim();
+    const branchId = Number(normalized.slice(0, 3));      // first 3 digits
+    const savingsAccountId = Number(normalized.slice(3)); // last 7 digits
 
-			// resolve savings_account_id
-			let accountId = savings_account_id ? Number(savings_account_id) : null;
+    // Map transaction type
+    const mapType = (v) => {
+      const t = String(v).toLowerCase();
+      if (t === 'withdraw' || t === 'withdrawal') return 'withdrawal';
+      if (t === 'deposit') return 'deposit';
+      return null;
+    };
 
-			if (!accountId && account_number) {
-				// account_number may be cosmetic (BRANCH-SAVINGSID, e.g. 001-000000001).
-				// Preference: if the DB actually stores account_number, lookup by it. Otherwise decode the savings id part.
-				const hasCol = await hasAccountNumberColumn();
-				if (hasCol) {
-					const res = await query('SELECT savings_account_id FROM savings_account WHERE account_number = $1', [account_number]);
-					if (res.rows.length === 0) {
-						return new Response(JSON.stringify({ success: false, error: 'Account not found by account_number' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
-					}
-					accountId = res.rows[0].savings_account_id;
-				} else {
-					// parse pattern like '001-000000001' -> take the part after '-' and strip leading zeros
-					const parts = String(account_number).trim().split('-');
-					const candidate = parts.length > 1 ? parts[parts.length - 1] : parts[0];
-					const numeric = candidate.replace(/^0+/, '') || '0';
-					if (/^\d+$/.test(numeric)) {
-						accountId = Number(numeric);
-					} else {
-						// also accept raw numeric input
-						if (/^\d+$/.test(String(account_number).trim())) {
-							accountId = Number(String(account_number).trim());
-						} else {
-							return new Response(JSON.stringify({ success: false, error: 'Invalid account_number format; expected BRANCH-SAVINGSID or numeric savings_account_id' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-						}
-					}
-				}
-			}
+    const transaction_type = mapType(txTypeRaw);
+    if (!transaction_type) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid transaction type. Only deposit or withdraw allowed.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-		if (!accountId) {
-			return new Response(JSON.stringify({ success: false, error: 'Unable to resolve savings account id' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-		}
+    // Get current agent (who performs the transaction)
+    const currentUser = await getCurrentUser(request);
+    const performed_by_user_id = currentUser?.userID || null;
 
-		// get current user (performed_by_user_id)
-		const currentUser = await getCurrentUser(request);
-		const performed_by_user_id = currentUser?.userID || null;
+    if (!performed_by_user_id) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Authentication required' }),
+        { status: 401, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-		// run DB transaction: lock row, check balance (for withdrawals), update balance, insert into transaction
-		const client = await pool.connect();
-		try {
-			await client.query('BEGIN');
+    // Check account exists, active, belongs to agent, and get min_balance_required
+    const accountCheckQuery = `
+      SELECT sa.savings_account_id, sa.balance, sa.status, sa.branch_id, sa.created_by_user_id,
+             sap.min_balance_required
+      FROM savings_account sa
+      JOIN savings_account_plan sap ON sa.savings_account_plan_id = sap.savings_account_plan_id
+      WHERE sa.savings_account_id = $1 AND sa.branch_id = $2
+    `;
+    const accRes = await query(accountCheckQuery, [savingsAccountId, branchId]);
 
-			// lock the savings account row
-			const selRes = await client.query('SELECT balance FROM savings_account WHERE savings_account_id = $1 FOR UPDATE', [accountId]);
-			if (selRes.rows.length === 0) {
-				await client.query('ROLLBACK');
-				return new Response(JSON.stringify({ success: false, error: 'Savings account not found' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
-			}
+    if (accRes.rows.length === 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Account not found for this branch' }),
+        { status: 404, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-			const currentBalance = Number(selRes.rows[0].balance || 0);
+    const account = accRes.rows[0];
 
-			let newBalance;
-			if (transaction_type === 'deposit') {
-				newBalance = currentBalance + amount;
-			} else if (transaction_type === 'withdrawal') {
-				if (currentBalance < amount) {
-					await client.query('ROLLBACK');
-					return new Response(JSON.stringify({ success: false, error: 'Insufficient funds' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
-				}
-				newBalance = currentBalance - amount;
-			} else if (transaction_type === 'interest') {
-				newBalance = currentBalance + amount;
-			}
+    // Ensure account is active
+    if (account.status !== 'active') {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Account is not active' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-			// update balance
-			await client.query('UPDATE savings_account SET balance = $1 WHERE savings_account_id = $2', [newBalance, accountId]);
+    // Ensure same agent created this account
+    if (String(account.created_by_user_id) !== String(performed_by_user_id)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'You can only perform transactions for customers you created' }),
+        { status: 403, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
 
-			// insert transaction record
-			const insertRes = await client.query(
-				`INSERT INTO transaction (savings_account_id, fixed_deposit_account_id, transaction_type, amount, performed_by_user_id)
-				 VALUES ($1, $2, $3, $4, $5) RETURNING transaction_id, created_at`,
-				[accountId, null, transaction_type, amount, performed_by_user_id]
-			);
+    // Begin DB transaction
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
 
-			await client.query('COMMIT');
+      // Lock the row to prevent race conditions
+      const lockRes = await client.query(
+        'SELECT balance FROM savings_account WHERE savings_account_id = $1 FOR UPDATE',
+        [savingsAccountId]
+      );
 
-			return new Response(JSON.stringify({ success: true, transaction: insertRes.rows[0], savings_account_id: accountId, new_balance: newBalance }), { status: 200, headers: { 'Content-Type': 'application/json' } });
-		} catch (err) {
-			await client.query('ROLLBACK');
-			throw err;
-		} finally {
-			client.release();
-		}
+      const currentBalance = Number(lockRes.rows[0].balance || 0);
+      const minBalance = Number(account.min_balance_required || 0);
+      let newBalance;
 
-	} catch (error) {
-		console.error('initiate-transaction error:', error);
-		return new Response(JSON.stringify({ success: false, error: String(error) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
-	}
+      if (transaction_type === 'deposit') {
+        newBalance = currentBalance + amount;
+      } else if (transaction_type === 'withdrawal') {
+        newBalance = currentBalance - amount;
+
+        // Check minimum balance requirement
+        if (newBalance < minBalance) {
+          await client.query('ROLLBACK');
+          return new Response(
+            JSON.stringify({
+              success: false,
+              error: `Withdrawal denied. Account must maintain minimum balance of ${minBalance}`,
+            }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+      }
+
+      // Update balance
+      await client.query(
+        `UPDATE savings_account SET balance = $1 WHERE savings_account_id = $2`,
+        [newBalance, savingsAccountId]
+      );
+
+      // Insert transaction
+      const txRes = await client.query(
+        `INSERT INTO transaction (savings_account_id, fixed_deposit_account_id, transaction_type, amount, performed_by_user_id, status)
+         VALUES ($1, NULL, $2, $3, $4, 'active')
+         RETURNING transaction_id, created_at`,
+        [savingsAccountId, transaction_type, amount, performed_by_user_id]
+      );
+
+      await client.query('COMMIT');
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Transaction completed successfully',
+          transaction: txRes.rows[0],
+          new_balance: newBalance,
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('DB transaction error:', err);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Internal server error during transaction' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      );
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('initiate-transaction error:', error);
+    return new Response(
+      JSON.stringify({ success: false, error: String(error) }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 }
