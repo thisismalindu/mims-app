@@ -68,6 +68,10 @@ export default function Dashboard({ changePage }) {
           <h3 className="text-lg font-semibold mb-2">Open Account</h3>
           <p className="text-sm opacity-80">Create a new account</p>
         </a>
+        <a onClick={() => changePage("Customers")} className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
+          <h3 className="text-lg font-semibold mb-2">Customers</h3>
+          <p className="text-sm opacity-80">View and manage customers</p>
+        </a>
         <a className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
           <h3 className="text-lg font-semibold mb-2">Placeholder Action</h3>
           <p className="text-sm opacity-80">More actions coming soon</p>

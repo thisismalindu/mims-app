@@ -73,7 +73,7 @@ export default function Page() {
       case "Dashboard":
         return <Dashboard changePage={changePage} />;
       case "Customers":
-        return <Customers />;
+        return <Customers changePage={changePage}/>;
       case "Accounts":
         return <Accounts />;
       case "Transactions":
