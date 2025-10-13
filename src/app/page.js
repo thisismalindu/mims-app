@@ -10,6 +10,7 @@ import Accounts from "./components/Accounts";
 import Transactions from "./components/Transactions";
 import SettingsPage from "./components/SettingsPage";
 import CreateCustomer from "./components/CreateCustomer";
+import InitiateTransaction from "./components/InitiateTransaction";
 
 export default function Page() {
 
@@ -81,6 +82,8 @@ export default function Page() {
         return <SettingsPage />;
       case "CreateCustomer":
         return <CreateCustomer changePage={changePage} />;
+      case "InitiateTransaction":
+        return <InitiateTransaction changePage={changePage} />;
       default:
         return (
           <div className="bg-white rounded-lg p-6 shadow text-gray-700">

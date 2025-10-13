@@ -7,17 +7,19 @@ export function middleware(request) {
 
   const token = request.cookies.get('auth_token')?.value;
   const { pathname } = request.nextUrl;
+  const searchParams = request.nextUrl.searchParams;
 
   console.log('pathname: ', pathname);
 
   // === Case 1: Login page ===
   if (pathname.startsWith('/login')) {
     if (token) {
-      
+      const nextParam = searchParams.get('next');
       return verifyToken(token)
         .then(() => {
-          console.log('Already logged in, redirecting to / and request url:', request.url);
-          return NextResponse.redirect(new URL('/', request.url));
+          const target = nextParam ? nextParam : '/';
+          console.log('Already logged in, redirecting to', target, 'and request url:', request.url);
+          return NextResponse.redirect(new URL(target, request.url));
         })
         .catch(() => {
           // Invalid token → let them log in again
@@ -39,8 +41,13 @@ export function middleware(request) {
 
   // Verify token using jose
   return verifyToken(token)
-    .then(() => {
+    .then((payload) => {
       console.log('Token valid, proceeding to ', pathname);
+      // Additional guard: prevent agents from accessing /register page directly
+      if (pathname.startsWith('/register') && payload?.role === 'agent') {
+        console.log('Agent attempting to access /register. Redirecting to home.');
+        return NextResponse.redirect(new URL('/', request.url));
+      }
       return NextResponse.next();
     })
     .catch((error) => {
