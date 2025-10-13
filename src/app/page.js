@@ -11,10 +11,12 @@ import Transactions from "./components/Transactions";
 import SettingsPage from "./components/SettingsPage";
 import CreateCustomer from "./components/CreateCustomer";
 import InitiateTransaction from "./components/InitiateTransaction";
+import Users from "./components/Users";
 
 export default function Page() {
 
   const [activePage, setActivePage] = useState("Dashboard");
+  const [user, setUser] = useState(null);
   
   useEffect(() => {
     const syncPageWithUrl = () => {
@@ -34,6 +36,22 @@ export default function Page() {
     };
   }, []);
 
+  // Fetch current user to compute role-based menu
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const res = await fetch('/api/me');
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data);
+        }
+      } catch (_) {
+        // ignore; middleware handles auth
+      }
+    }
+    fetchUser();
+  }, []);
+
   const changePage = (page) => {
     setActivePage(page)
     const params = new URLSearchParams(window.location.search)
@@ -41,14 +59,49 @@ export default function Page() {
     window.history.pushState({}, "", "?" + params.toString())
   }
 
-  const menuItems = [
-    { name: "Dashboard", icon: <HomeIcon /> },
-    { name: "Customers", icon: <UsersIcon /> },
-    { name: "Accounts", icon: <BanknotesIcon /> },
-    { name: "Transactions", icon: <DocumentTextIcon /> },
-    { name: "Settings", icon: <Cog6ToothIcon /> },
-    { name: "Profile", icon: <UserIcon /> },
-  ];
+  // Build menu dynamically based on user role
+  const menuItems = (() => {
+    // Default minimal menu before user loads
+    if (!user) {
+      return [
+        { name: "Dashboard", icon: <HomeIcon /> },
+        { name: "Settings", icon: <Cog6ToothIcon /> },
+        { name: "Profile", icon: <UserIcon /> },
+      ];
+    }
+
+    const commonStart = [ { name: "Dashboard", icon: <HomeIcon /> } ];
+    const commonEnd = [
+      { name: "Settings", icon: <Cog6ToothIcon /> },
+      { name: "Profile", icon: <UserIcon /> },
+    ];
+
+    if (user.role === 'admin') {
+      // Admin: Dashboard, Users, Settings, Profile
+      return [
+        ...commonStart,
+        { name: "Users", icon: <UsersIcon /> },
+        ...commonEnd,
+      ];
+    }
+
+    if (user.role === 'manager' || user.role === 'agent') {
+      // Manager/Agent: Dashboard, Customers, Accounts, Transactions, Settings, Profile
+      return [
+        ...commonStart,
+        { name: "Customers", icon: <UsersIcon /> },
+        { name: "Accounts", icon: <BanknotesIcon /> },
+        { name: "Transactions", icon: <DocumentTextIcon /> },
+        ...commonEnd,
+      ];
+    }
+
+    // Fallback
+    return [
+      ...commonStart,
+      ...commonEnd,
+    ];
+  })();
 
   const handleLogout = async () => {
     try {
@@ -84,6 +137,8 @@ export default function Page() {
         return <CreateCustomer changePage={changePage} />;
       case "InitiateTransaction":
         return <InitiateTransaction changePage={changePage} />;
+      case "Users":
+        return <Users changePage={changePage} />;
       case "CreateUser":
         window.location.replace("/register");
         return null;
