@@ -4,6 +4,10 @@ import React, { useState } from "react";
 export default function InitiateTransaction({changePage}) {
 
     const [loading, setLoading] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    const [successData, setSuccessData] = useState(null);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -24,22 +28,104 @@ export default function InitiateTransaction({changePage}) {
                 body: JSON.stringify(data),
             });
 
+            const result = await response.json();
+
             if (!response.ok) {
-                throw new Error('Failed to initiate transaction');
+                setErrorMessage(result.error || 'Failed to initiate transaction');
+                setShowErrorModal(true);
+                return;
             }
 
-            // Optionally handle success (e.g., clear form, show message)
-            alert('Transaction initiated successfully!');
+            // Show success modal with transaction details
+            setSuccessData(result);
+            setShowSuccessModal(true);
             e.target.reset();
         } catch (error) {
-            alert(error.message);
+            setErrorMessage('Network error: Unable to connect to server');
+            setShowErrorModal(true);
         } finally {
-            setLoading(false); // re-enable button after response
+            setLoading(false);
         }
     };
 
+    const closeErrorModal = () => {
+        setShowErrorModal(false);
+        setErrorMessage('');
+    };
+
+    const closeSuccessModal = () => {
+        setShowSuccessModal(false);
+        setSuccessData(null);
+    };
+
+    // Error Modal Component
+    const ErrorModal = () => (
+        showErrorModal && (
+            <div className="fixed inset-0 bg-gray-100 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+                <div className="relative mx-auto p-5 w-96 shadow-lg rounded-md bg-white">
+                    <div className="mt-3 text-center">
+                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                            <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </div>
+                        <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">Transaction Failed</h3>
+                        <div className="mt-2 px-7 py-3">
+                            <p className="text-sm text-gray-500">{errorMessage}</p>
+                        </div>
+                        <div className="items-center px-4 py-3">
+                            <button
+                                onClick={closeErrorModal}
+                                className="px-4 py-2 bg-red-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    );
+
+    // Success Modal Component
+    const SuccessModal = () => (
+        showSuccessModal && successData && (
+            <div className="fixed inset-0 bg-gray-100 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+                <div className="relative mx-auto p-5  w-96 shadow-lg rounded-md bg-white">
+                    <div className="mt-3 text-center">
+                        <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+                            <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
+                        <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">Transaction Successful</h3>
+                        <div className="mt-2 px-7 py-3">
+                            <p className="text-sm text-gray-500 mb-2">{successData.message}</p>
+                            <div className="text-sm text-left bg-gray-50 p-3 rounded-md">
+                                <p><span className="font-medium">Transaction ID:</span> {successData.transaction.transaction_id}</p>
+                                <p><span className="font-medium">New Balance:</span> Rs. {parseFloat(successData.new_balance).toFixed(2)}</p>
+                                <p><span className="font-medium">Date:</span> {new Date(successData.transaction.created_at).toLocaleString()}</p>
+                            </div>
+                        </div>
+                        <div className="items-center px-4 py-3">
+                            <button
+                                onClick={closeSuccessModal}
+                                className="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    );
+
     return (
         <div className=" px-6 py-12 lg:px-8">
+            {/* Modals */}
+            <ErrorModal />
+            <SuccessModal />
 
             <a onClick={() => changePage("Dashboard")}  className='rounded-md font-medium tracking-tight text-blue-500 cursor-pointer hover:text-blue-600'>
             ⬅ back
