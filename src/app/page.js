@@ -84,6 +84,9 @@ export default function Page() {
         return <CreateCustomer changePage={changePage} />;
       case "InitiateTransaction":
         return <InitiateTransaction changePage={changePage} />;
+      case "CreateUser":
+        window.location.replace("/register");
+        return null;
       default:
         return (
           <div className="bg-white rounded-lg p-6 shadow text-gray-700">
