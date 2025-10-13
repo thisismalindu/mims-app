@@ -37,13 +37,13 @@ export default function Dashboard({ changePage }) {
   // Define role-specific duties
   const roleDuties = {
     admin: [
-      { name: "Create Admin", action: "CreateAdmin", description: "Add a new admin to the system" },
+      { name: "Create User", action: "CreateUser", description: "Add a new user to the system" },
       { name: "Generate Reports", action: "GenerateReports", description: "View and generate system reports" },
       { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
       { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
     ],
     manager: [
-      { name: "Create Agent", action: "CreateAgent", description: "Add a new agent to the system" },
+      { name: "Create Agent", action: "CreateUser", description: "Add a new agent to the system" },
       { name: "Request Report", action: "RequestReport", description: "Request a system report" },
       { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
       { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
@@ -84,22 +84,6 @@ export default function Dashboard({ changePage }) {
             <p className="text-sm opacity-80">{duty.description}</p>
           </a>
         ))}
-        <a onClick={() => changePage("CreateCustomer")} className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
-          <h3 className="text-lg font-semibold mb-2">Create Customer</h3>
-          <p className="text-sm opacity-80">Add a new customer to the system</p>
-        </a>
-        <a onClick={() => changePage("InitiateTransaction")} className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
-          <h3 className="text-lg font-semibold mb-2">Initiate Transaction</h3>
-          <p className="text-sm opacity-80">Start a new transaction</p>
-        </a>
-        <a className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
-          <h3 className="text-lg font-semibold mb-2">Open Account</h3>
-          <p className="text-sm opacity-80">Create a new account</p>
-        </a>
-        <a className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
-          <h3 className="text-lg font-semibold mb-2">Placeholder Action</h3>
-          <p className="text-sm opacity-80">More actions coming soon</p>
-        </a>
       </div>
     </>
   );
