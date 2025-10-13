@@ -37,7 +37,7 @@ export default function LoginPage() {
                 return;
             }
 
-            alert('Login successful!');
+            // alert('Login successful!');
             // Redirect or handle successful login
             window.location.href = next || '/';
 

@@ -20,11 +20,11 @@ export default function Login({ action, username, password, setUsername, setPass
     return (
         <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-                <img
+                <a href="/" className="cursor-pointer"><img
                     alt="Your Company"
                     src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=blue&shade=500"
                     className="mx-auto h-10 w-auto"
-                />
+                /></a>
                 <h2 className="mt-10 text-center text-gray-900 text-2xl/9 font-bold tracking-tight">
                     Sign in to your account
                 </h2>
