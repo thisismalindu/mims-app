@@ -55,17 +55,20 @@ export default function RegisterPage() {
         body: JSON.stringify(payload),
       });
 
+      const data = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Registration failed.');
-        return;
+        const message = data.error || 'Registration failed.';
+        setError(message);
+        return { ok: false, error: message };
       }
 
-      const data = await res.json();
-      alert('User created successfully');
-      window.location.href = '/';
+      // success
+      return { ok: true, data, message: 'User created successfully' };
     } catch (err) {
-      setError('An error occurred. Please try again.');
+      const message = 'An error occurred. Please try again.';
+      setError(message);
+      return { ok: false, error: message };
     }
   };
 
