@@ -143,6 +143,8 @@ export default function Page() {
         return <CreateSavingAccount changePage={changePage} />;
       case "Users":
         return <Users changePage={changePage} />;
+      case "createfixeddeposit":
+        return <CreateFixedDeposit changePage={changePage} />;
       case "CreateUser":
         window.location.replace("/register");
         return null;
