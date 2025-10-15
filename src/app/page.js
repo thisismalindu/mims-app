@@ -12,7 +12,8 @@ import SettingsPage from "./components/SettingsPage";
 import CreateCustomer from "./components/CreateCustomer";
 import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
-import CreateSavingAccount from "./components/CreateSavingAccount"; 
+import CreateSavingAccount from "./components/CreateSavingAccount";
+import CreateFixedDeposit from "./components/CreateFixedDeposit";
 
 export default function Page() {
 
@@ -143,7 +144,7 @@ export default function Page() {
         return <CreateSavingAccount changePage={changePage} />;
       case "Users":
         return <Users changePage={changePage} />;
-      case "createfixeddeposit":
+      case "CreateFixedDeposit":
         return <CreateFixedDeposit changePage={changePage} />;
       case "CreateUser":
         window.location.replace("/register");
