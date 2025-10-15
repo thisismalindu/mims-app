@@ -1,11 +1,16 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Login from './components/Login';
 
 export default function LoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+
+    // read query params
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const next = searchParams?.get('next') || '/';
+    const info = searchParams?.get('info') === '1';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -32,9 +37,9 @@ export default function LoginPage() {
                 return;
             }
 
-            alert('Login successful!');
+            // alert('Login successful!');
             // Redirect or handle successful login
-            window.location.href = '/';
+            window.location.href = next || '/';
 
         } catch (err) {
             setError('An error occurred. Please try again.');
@@ -49,6 +54,7 @@ export default function LoginPage() {
             setUsername={setUsername}
             setPassword={setPassword}
             error={error}
+            info={info}
         />
     );
 }

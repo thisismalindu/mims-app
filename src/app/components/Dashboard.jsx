@@ -4,13 +4,6 @@ import React from "react";
 import { useEffect, useState } from "react";
 
 export default function Dashboard({ changePage }) {
-  const stats = {
-    totalCustomers: 1500,
-    totalAccounts: 2300,
-    activeFixedDeposits: 120,
-    totalTransactionVolume: 5000000,
-  };
-
   const [recentTransactions, setRecentTransactions] = useState([]);
 
   useEffect(() => {
@@ -41,104 +34,58 @@ export default function Dashboard({ changePage }) {
     manager: 'bg-green-500',
     agent: 'bg-blue-400',
   };
+  // Define role-specific duties
+  const roleDuties = {
+    admin: [
+      { name: "Create User", action: "CreateUser", description: "Add a new user to the system" },
+      { name: "Generate Reports", action: "GenerateReports", description: "View and generate system reports" },
+      { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
+      { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
+    ],
+    manager: [
+      { name: "Create Agent", action: "CreateUser", description: "Add a new agent to the system" },
+      { name: "Request Report", action: "RequestReport", description: "Request a system report" },
+      { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
+      { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
+    ],
+    agent: [
+      { name: "Create Customer", action: "CreateCustomer", description: "Add a new customer to the system" },
+      { name: "Create Saving Account", action: "CreateSavingAccount", description: "Open a new savings account" },
+      { name: "Create Fixed Deposit", action: "CreateFixedDeposit", description: "Start a new fixed deposit" },
+      { name: "Initiate Transaction", action: "InitiateTransaction", description: "Process a new transaction" },
+    ],
+  };
+
 
   return (
     <>
       {/* === Top Stats Section === */}
       {user ? (
         <div className="flex my-10 items-center">
-          <h2 className=" text-gray-900 text-2xl/9 font-bold tracking-tight">
-          Welcome, {user.username}!
+          <h2 className="text-gray-900 text-2xl/9 font-bold tracking-tight">
+            Welcome, {user.username}!
           </h2>
-          <p className={`ml-4 text-white rounded-lg ${roleColors[user.role]} text-[8px] font-bold tracking-wide py-0.5 px-2`}>{user.role.toUpperCase()}</p>
-          {/* {user.role === 'admin' && (<div> is admin </div>)} */ /* how to create UI dynamically */}
+          <p className={`ml-4 text-white rounded-lg ${roleColors[user.role]} text-[8px] font-bold tracking-wide py-0.5 px-2`}>
+            {user.role.toUpperCase()}
+          </p>
         </div>
-        ) : (<p>Loading...</p>)}
+      ) : (
+        <p>Loading...</p>
+      )}
 
       <div className="flex flex-wrap gap-6 mb-8">
-        <a onClick={() => changePage("CreateCustomer")} className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
-          <h3 className="text-lg font-semibold mb-2">Create Customer</h3>
-          <p className="text-sm opacity-80">Add a new customer to the system</p>
-        </a>
-        <a onClick={() => changePage("InitiateTransaction")} className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
-          <h3 className="text-lg font-semibold mb-2">Initiate Transaction</h3>
-          <p className="text-sm opacity-80">Start a new transaction</p>
-        </a>
-        <a className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
-          <h3 className="text-lg font-semibold mb-2">Open Account</h3>
-          <p className="text-sm opacity-80">Create a new account</p>
-        </a>
-        <a onClick={() => changePage("Customers")} className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
-          <h3 className="text-lg font-semibold mb-2">Customers</h3>
-          <p className="text-sm opacity-80">View and manage customers</p>
-        </a>
-        <a className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors">
-          <h3 className="text-lg font-semibold mb-2">Placeholder Action</h3>
-          <p className="text-sm opacity-80">More actions coming soon</p>
-        </a>
+        {user && roleDuties[user.role].map((duty) => (
+          <a
+            key={duty.action}
+            onClick={() => changePage(duty.action)}
+            className="flex-1 min-w-[180px] bg-gray-50 text-gray-900 rounded-xl p-6 border-1 border-gray-300 cursor-pointer hover:bg-gray-200 transition-colors"
+          >
+            <h3 className="text-lg font-semibold mb-2">{duty.name}</h3>
+            <p className="text-sm opacity-80">{duty.description}</p>
+          </a>
+        ))}
       </div>
-
-
-      {/* 
-      <div className="mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-xl p-6 shadow hover:-translate-y-1 transition-transform">
-            <h2 className="text-sm text-gray-600 mb-2">Total Customers</h2>
-            <p className="text-2xl font-bold text-gray-900">{stats.totalCustomers}</p>
-          </div>
-          <div className="bg-white rounded-xl p-6 shadow hover:-translate-y-1 transition-transform">
-            <h2 className="text-sm text-gray-600 mb-2">Total Accounts</h2>
-            <p className="text-2xl font-bold text-gray-900">{stats.totalAccounts}</p>
-          </div>
-          <div className="bg-white rounded-xl p-6 shadow hover:-translate-y-1 transition-transform">
-            <h2 className="text-sm text-gray-600 mb-2">Fixed Deposits</h2>
-            <p className="text-2xl font-bold text-gray-900">{stats.activeFixedDeposits}</p>
-          </div>
-          <div className="bg-white rounded-xl p-6 shadow hover:-translate-y-1 transition-transform">
-            <h2 className="text-sm text-gray-600 mb-2">Transaction Volume</h2>
-            <p className="text-2xl font-bold text-gray-900">
-              {stats.totalTransactionVolume.toLocaleString()} Rs
-            </p>
-          </div>
-        </div>
-      </div> */}
-
-      {/* === Recent Transactions Section === */}
-      {/* <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800">Recent Transactions</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-100 text-left text-sm font-medium text-gray-700">
-                <th className="p-3">ID</th>
-                <th className="p-3">Customer</th>
-                <th className="p-3">Type</th>
-                <th className="p-3">Amount (Rs)</th>
-                <th className="p-3">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentTransactions.map((tx) => (
-                <tr
-                  key={tx.id}
-                  className="hover:bg-gray-50 text-sm border-b last:border-0"
-                >
-                  <td className="p-3">{tx.id}</td>
-                  <td className="p-3">{tx.customer}</td>
-                  <td
-                    className={`p-3 font-medium ${tx.type === "Deposit" ? "text-green-600" : "text-red-600"
-                      }`}
-                  >
-                    {tx.type}
-                  </td>
-                  <td className="p-3">{tx.amount.toLocaleString()}</td>
-                  <td className="p-3">{tx.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div> */}
     </>
   );
 }
+

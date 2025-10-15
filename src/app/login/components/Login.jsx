@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 
-export default function Login({ action, username, password, setUsername, setPassword, error }) {
+export default function Login({ action, username, password, setUsername, setPassword, error, info }) {
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
@@ -20,11 +20,11 @@ export default function Login({ action, username, password, setUsername, setPass
     return (
         <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-                <img
+                <a href="/" className="cursor-pointer"><img
                     alt="Your Company"
                     src="https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=blue&shade=500"
                     className="mx-auto h-10 w-auto"
-                />
+                /></a>
                 <h2 className="mt-10 text-center text-gray-900 text-2xl/9 font-bold tracking-tight">
                     Sign in to your account
                 </h2>
@@ -32,6 +32,11 @@ export default function Login({ action, username, password, setUsername, setPass
 
             <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
                 <form onSubmit={handleSubmit} className="space-y-6">
+                    {info && (
+                        <p className="text-blue-500 text-sm text-center">
+                            Only existing users can create new accounts. Please log in first, and you'll be redirected to the registration page.
+                        </p>
+                    )}
                     {error && (
                         <p className="text-red-500 text-sm text-center">{error}</p>
                     )}
@@ -102,7 +107,7 @@ export default function Login({ action, username, password, setUsername, setPass
 
                 <p className="mt-10 text-center text-sm/6 text-gray-400">
                     New User?{" "}
-                    <a tabIndex={4} href="#" className="font-semibold text-blue-400 hover:text-blue-300">
+                    <a tabIndex={4} href="/login?next=/register&info=1" className="font-semibold text-blue-400 hover:text-blue-300">
                         Register now
                     </a>
                 </p>
