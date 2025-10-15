@@ -13,6 +13,7 @@ import CreateCustomer from "./components/CreateCustomer";
 import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
 import CreateFixedDepositPlan from "./components/CreateFixedDepositPlan";
+import CreateSavingAccount from "./components/CreateSavingAccount"; 
 
 export default function Page() {
 
@@ -92,6 +93,7 @@ export default function Page() {
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
+        { name: "CreateSavingAccount", icon: <BanknotesIcon /> },
         { name: "Transactions", icon: <DocumentTextIcon /> },
         ...commonEnd,
       ];
@@ -127,7 +129,7 @@ export default function Page() {
       case "Dashboard":
         return <Dashboard changePage={changePage} />;
       case "Customers":
-        return <Customers />;
+        return <Customers changePage={changePage}/>;
       case "Accounts":
         return <Accounts />;
       case "Transactions":
@@ -138,6 +140,8 @@ export default function Page() {
         return <CreateCustomer changePage={changePage} />;
       case "InitiateTransaction":
         return <InitiateTransaction changePage={changePage} />;
+      case "CreateSavingAccount":
+        return <CreateSavingAccount changePage={changePage} />;
       case "Users":
         return <Users changePage={changePage} />;
       case "CreateUser":
