@@ -37,12 +37,14 @@ export default function Dashboard({ changePage }) {
   // Define role-specific duties
   const roleDuties = {
     admin: [
+      { name: "Create Branch", action: "CreateBranch", description: "Add a new bank branch" },
       { name: "Create User", action: "CreateUser", description: "Add a new user to the system" },
       { name: "Generate Reports", action: "GenerateReports", description: "View and generate system reports" },
       { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
       { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
     ],
     manager: [
+      { name: "Create Branch", action: "CreateBranch", description: "Add a new bank branch" },
       { name: "Create Agent", action: "CreateUser", description: "Add a new agent to the system" },
       { name: "Request Report", action: "RequestReport", description: "Request a system report" },
       { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },

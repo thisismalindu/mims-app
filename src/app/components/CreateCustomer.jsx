@@ -45,7 +45,6 @@ export default function CreateCustomer({changePage}) {
             ⬅ back
             </a>
 
-
             <h2 className="mt-10 text-gray-900 text-2xl/9 font-bold tracking-tight ">
                 Create New Customer
             </h2>
@@ -70,7 +69,7 @@ export default function CreateCustomer({changePage}) {
                                 </div>
                                 {field.type === "select" ? (
                                     <select id={field.id} name={field.name} required={field.required}>
-                                        {field.options.map(opt => (
+                                        {field.options && field.options.map(opt => (
                                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                                         ))}
                                     </select>

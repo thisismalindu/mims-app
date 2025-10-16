@@ -10,8 +10,10 @@ import Accounts from "./components/Accounts";
 import Transactions from "./components/Transactions";
 import SettingsPage from "./components/SettingsPage";
 import CreateCustomer from "./components/CreateCustomer";
+import CreateBranch from "./components/CreateBranch";
 import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
+import Branches from "./components/Branches";
 
 export default function Page() {
 
@@ -81,6 +83,7 @@ export default function Page() {
       return [
         ...commonStart,
         { name: "Users", icon: <UsersIcon /> },
+        { name: "Branches", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
     }
@@ -135,6 +138,10 @@ export default function Page() {
         return <SettingsPage />;
       case "CreateCustomer":
         return <CreateCustomer changePage={changePage} />;
+      case "CreateBranch":
+        return <CreateBranch changePage={changePage} />;
+      case "Branches":
+        return <Branches changePage={changePage} />;
       case "InitiateTransaction":
         return <InitiateTransaction changePage={changePage} />;
       case "Users":
