@@ -15,6 +15,7 @@ import Users from "./components/Users";
 import CreateSavingAccount from "./components/CreateSavingAccount"; 
 import RequestReport from "./components/RequestReport";
 import Profile from "./components/Profile";
+import CreateBranch from "./components/CreateBranch";
 
 export default function Page() {
 
@@ -84,6 +85,7 @@ export default function Page() {
       return [
         ...commonStart,
         { name: "Users", icon: <UsersIcon /> },
+        { name: "Branches", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
     }
@@ -155,6 +157,8 @@ export default function Page() {
         return <Users changePage={changePage} />;
       case "Profile":
         return <Profile />;
+      case "CreateBranch":
+        return <CreateBranch changePage={changePage} />;
       case "CreateUser":
         window.location.replace("/register");
         return null;
