@@ -14,6 +14,7 @@ import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
 import CreateSavingAccount from "./components/CreateSavingAccount"; 
 import RequestReport from "./components/RequestReport";
+import Profile from "./components/Profile";
 
 export default function Page() {
 
@@ -91,9 +92,6 @@ export default function Page() {
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
-        { name: "CreateSavingAccount", icon: <BanknotesIcon /> },
-        { name: "Transactions", icon: <DocumentTextIcon /> },
-        { name: "RequestReport", icon: <ChartBarIcon /> }, // ✅ NEW
         ...commonEnd,
       ];
     }
@@ -103,7 +101,6 @@ export default function Page() {
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
-        { name: "CreateSavingAccount", icon: <BanknotesIcon /> },
         { name: "Transactions", icon: <DocumentTextIcon /> },
         ...commonEnd,
       ];
@@ -156,6 +153,8 @@ export default function Page() {
         return <RequestReport changePage={changePage} />;
       case "Users":
         return <Users changePage={changePage} />;
+      case "Profile":
+        return <Profile />;
       case "CreateUser":
         window.location.replace("/register");
         return null;
