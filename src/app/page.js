@@ -12,6 +12,8 @@ import SettingsPage from "./components/SettingsPage";
 import CreateCustomer from "./components/CreateCustomer";
 import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
+import CreateAccountPlan from "./components/CreateAccountPlan";
+
 
 export default function Page() {
 
@@ -142,6 +144,8 @@ export default function Page() {
       case "CreateUser":
         window.location.replace("/register");
         return null;
+      case "CreateAccountPlan":
+        return <CreateAccountPlan changePage={changePage} />;
       default:
         return (
           <div className="bg-white rounded-lg p-6 shadow text-gray-700">
