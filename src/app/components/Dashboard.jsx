@@ -41,6 +41,7 @@ export default function Dashboard({ changePage }) {
       { name: "Generate Reports", action: "GenerateReports", description: "View and generate system reports" },
       { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
       { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
+      { name: "Create Branch", action: "CreateBranch", description: "Add a new branch to the system" },
     ],
     manager: [
       { name: "Create Agent", action: "CreateUser", description: "Add a new agent to the system" },

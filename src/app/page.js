@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {UserIcon, HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTextIcon, ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline'
+import {UserIcon, HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTextIcon, ArrowRightStartOnRectangleIcon, ChartBarIcon } from '@heroicons/react/24/outline'
 
 import Dashboard from "./components/Dashboard";
 import Customers from "./components/Customers";
@@ -14,6 +14,9 @@ import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
 import CreateFixedDepositPlan from "./components/CreateFixedDepositPlan";
 import CreateSavingAccount from "./components/CreateSavingAccount"; 
+import RequestReport from "./components/RequestReport";
+import Profile from "./components/Profile";
+import CreateBranch from "./components/CreateBranch";
 
 export default function Page() {
 
@@ -83,22 +86,29 @@ export default function Page() {
       return [
         ...commonStart,
         { name: "Users", icon: <UsersIcon /> },
+        { name: "Branches", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
     }
-
-    if (user.role === 'manager' || user.role === 'agent') {
-      // Manager/Agent: Dashboard, Customers, Accounts, Transactions, Settings, Profile
+    if (user.role === 'manager') { 
       return [
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
-        { name: "CreateSavingAccount", icon: <BanknotesIcon /> },
-        { name: "Transactions", icon: <DocumentTextIcon /> },
         ...commonEnd,
       ];
     }
 
+    if (user.role === 'agent') {
+      return [
+        ...commonStart,
+        { name: "Customers", icon: <UsersIcon /> },
+        { name: "Accounts", icon: <BanknotesIcon /> },
+        { name: "Transactions", icon: <DocumentTextIcon /> },
+        ...commonEnd,
+      ];
+    }
+    
     // Fallback
     return [
       ...commonStart,
@@ -142,8 +152,14 @@ export default function Page() {
         return <InitiateTransaction changePage={changePage} />;
       case "CreateSavingAccount":
         return <CreateSavingAccount changePage={changePage} />;
+      case "RequestReport":
+        return <RequestReport changePage={changePage} />;
       case "Users":
         return <Users changePage={changePage} />;
+      case "Profile":
+        return <Profile />;
+      case "CreateBranch":
+        return <CreateBranch changePage={changePage} />;
       case "CreateUser":
         window.location.replace("/register");
         return null;
