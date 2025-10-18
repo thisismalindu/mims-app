@@ -55,6 +55,7 @@ export default function Users() {
 						<thead>
 							<tr className="bg-gray-50 text-left text-sm font-medium text-gray-700">
 								<th className="p-3">ID</th>
+								<th className="p-3">Name</th>
 								<th className="p-3">Username</th>
 								<th className="p-3">Role</th>
 								<th className="p-3">Email</th>
@@ -67,7 +68,8 @@ export default function Users() {
 							{users.map((u) => (
 								<tr key={u.user_id} onClick={() => onRowClick(u)} className="hover:bg-gray-50 text-sm border-b border-b-gray-200 last:border-0 cursor-pointer">
 									<td className="p-3">{u.user_id}</td>
-									<td className="p-3 font-medium">{u.username}</td>
+									<td className="p-3 font-medium">{u.first_name && u.last_name ? `${u.first_name} ${u.last_name}` : '-'}</td>
+									<td className="p-3">{u.username}</td>
 									<td className="p-3">
 										<span className={`px-2 py-0.5 rounded text-xs font-semibold text-white ${u.role === 'admin' ? 'bg-red-400' : u.role === 'manager' ? 'bg-green-500' : 'bg-blue-400'}`}>
 											{String(u.role).toUpperCase()}

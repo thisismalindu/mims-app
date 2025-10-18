@@ -19,6 +19,7 @@ import CreateSavingAccount from "./components/CreateSavingAccount";
 import RequestReport from "./components/RequestReport";
 import Profile from "./components/Profile";
 import CreateBranch from "./components/CreateBranch";
+import Agents from "./components/Agents";
 
 export default function Page() {
 
@@ -84,10 +85,11 @@ export default function Page() {
     ];
 
     if (user.role === 'admin') {
-      // Admin: Dashboard, Users, Settings, Profile
+      // Admin: Dashboard, Users, Agents, Settings, Profile
       return [
         ...commonStart,
         { name: "Users", icon: <UsersIcon /> },
+        { name: "Agents", icon: <UserIcon /> },
         { name: "Branches", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
@@ -96,6 +98,7 @@ export default function Page() {
       return [
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
+        { name: "Agents", icon: <UserIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
@@ -142,6 +145,8 @@ export default function Page() {
         return <Dashboard changePage={changePage} />;
       case "Customers":
         return <Customers changePage={changePage}/>;
+      case "Agents":
+        return <Agents changePage={changePage} />;
       case "Accounts":
         return <Accounts />;
       case "Transactions":
