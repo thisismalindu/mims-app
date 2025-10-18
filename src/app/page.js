@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {UserIcon, HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTextIcon, ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline'
+import {UserIcon, HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTextIcon, ArrowRightStartOnRectangleIcon, ChartBarIcon } from '@heroicons/react/24/outline'
 
 import Dashboard from "./components/Dashboard";
 import Customers from "./components/Customers";
@@ -14,11 +14,22 @@ import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
 import CreateSavingAccount from "./components/CreateSavingAccount";
 import CreateFixedDeposit from "./components/CreateFixedDeposit";
+import CreateAccountPlan from "./components/CreateAccountPlan";
+
+import CreateFixedDepositPlan from "./components/CreateFixedDepositPlan";
+import CreateSavingAccount from "./components/CreateSavingAccount"; 
+import RequestReport from "./components/RequestReport";
+import Profile from "./components/Profile";
+import CreateBranch from "./components/CreateBranch";
+import CustomerDetails from "./components/CustomerDetails";
+import AccountDetails from "./components/AccountDetails";
 
 export default function Page() {
 
   const [activePage, setActivePage] = useState("Dashboard");
   const [user, setUser] = useState(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null);
   
   useEffect(() => {
     const syncPageWithUrl = () => {
@@ -79,26 +90,34 @@ export default function Page() {
     ];
 
     if (user.role === 'admin') {
-      // Admin: Dashboard, Users, Settings, Profile
+      // Admin: Dashboard, Customers, Users, Branches, Settings, Profile
       return [
         ...commonStart,
+        { name: "Customers", icon: <UsersIcon /> },
         { name: "Users", icon: <UsersIcon /> },
+        { name: "Branches", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
     }
-
-    if (user.role === 'manager' || user.role === 'agent') {
-      // Manager/Agent: Dashboard, Customers, Accounts, Transactions, Settings, Profile
+    if (user.role === 'manager') { 
       return [
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
-        { name: "CreateSavingAccount", icon: <BanknotesIcon /> },
-        { name: "Transactions", icon: <DocumentTextIcon /> },
         ...commonEnd,
       ];
     }
 
+    if (user.role === 'agent') {
+      return [
+        ...commonStart,
+        { name: "Customers", icon: <UsersIcon /> },
+        { name: "Accounts", icon: <BanknotesIcon /> },
+        { name: "Transactions", icon: <DocumentTextIcon /> },
+        ...commonEnd,
+      ];
+    }
+    
     // Fallback
     return [
       ...commonStart,
@@ -129,7 +148,27 @@ export default function Page() {
       case "Dashboard":
         return <Dashboard changePage={changePage} />;
       case "Customers":
-        return <Customers />;
+        return <Customers changePage={changePage} onSelectCustomer={(customerId) => {
+          setSelectedCustomerId(customerId);
+          changePage("CustomerDetails");
+        }} />;
+      case "CustomerDetails":
+        return <CustomerDetails 
+          customerId={selectedCustomerId} 
+          changePage={changePage}
+          onSelectAccount={(accountType, accountId) => {
+            setSelectedAccount({ accountType, accountId });
+            changePage("AccountDetails");
+          }}
+          onBack={() => changePage("Customers")}
+        />;
+      case "AccountDetails":
+        return <AccountDetails 
+          accountType={selectedAccount?.accountType}
+          accountId={selectedAccount?.accountId}
+          changePage={changePage}
+          onBack={() => changePage("CustomerDetails")}
+        />;
       case "Accounts":
         return <Accounts />;
       case "Transactions":
@@ -142,13 +181,23 @@ export default function Page() {
         return <InitiateTransaction changePage={changePage} />;
       case "CreateSavingAccount":
         return <CreateSavingAccount changePage={changePage} />;
+      case "RequestReport":
+        return <RequestReport changePage={changePage} />;
       case "Users":
         return <Users changePage={changePage} />;
       case "CreateFixedDeposit":
         return <CreateFixedDeposit changePage={changePage} />;
+      case "Profile":
+        return <Profile />;
+      case "CreateBranch":
+        return <CreateBranch changePage={changePage} />;
       case "CreateUser":
         window.location.replace("/register");
         return null;
+      case "CreateAccountPlan":
+        return <CreateAccountPlan changePage={changePage} />;
+      case "CreateFixedDepositPlan":
+        return <CreateFixedDepositPlan changePage={changePage} />;
       default:
         return (
           <div className="bg-white rounded-lg p-6 shadow text-gray-700">

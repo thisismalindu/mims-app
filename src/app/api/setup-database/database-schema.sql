@@ -24,12 +24,6 @@ CREATE TYPE ownership_type AS ENUM (
   'joint'
 );
 
-CREATE TYPE duration_months AS ENUM (
-  '6_months',
-  '12_months',
-  '36_months'
-);
-
 CREATE TYPE transaction_type_enum AS ENUM (
   'deposit',
   'withdrawal',
@@ -128,7 +122,7 @@ CREATE TABLE savings_account (
 CREATE TABLE fixed_deposit_account_plan (
   fixed_deposit_account_plan_id BIGSERIAL PRIMARY KEY,
   name text UNIQUE NOT NULL,
-  duration duration_months,
+  duration NUMERIC NOT NULL,
   interest_rate NUMERIC(12,6),
   minimum_amount_required NUMERIC(30,10),
   description text,
