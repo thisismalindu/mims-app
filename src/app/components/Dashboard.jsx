@@ -38,6 +38,7 @@ export default function Dashboard({ changePage }) {
   const roleDuties = {
     admin: [
       { name: "Create User", action: "CreateUser", description: "Add a new user to the system" },
+      { name: "View Agents", action: "Agents", description: "View all agents in the system" },
       { name: "Generate Reports", action: "GenerateReports", description: "View and generate system reports" },
       { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
       { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
@@ -45,6 +46,7 @@ export default function Dashboard({ changePage }) {
     ],
     manager: [
       { name: "Create Agent", action: "CreateUser", description: "Add a new agent to the system" },
+      { name: "View Agents", action: "Agents", description: "View agents you created" },
       { name: "Request Report", action: "RequestReport", description: "Request a system report" },
       { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
       { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
@@ -64,7 +66,7 @@ export default function Dashboard({ changePage }) {
       {user ? (
         <div className="flex my-10 items-center">
           <h2 className="text-gray-900 text-2xl/9 font-bold tracking-tight">
-            Welcome, {user.username}!
+            Welcome, {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username}!
           </h2>
           <p className={`ml-4 text-white rounded-lg ${roleColors[user.role]} text-[8px] font-bold tracking-wide py-0.5 px-2`}>
             {user.role.toUpperCase()}

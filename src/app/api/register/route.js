@@ -12,9 +12,9 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { username, password, role, email, branchid, created_by_userid } = body;
+    const { username, password, first_name, last_name, role, email, branchid, created_by_userid } = body;
 
-    if (!username || !password || !role) {
+    if (!username || !password || !first_name || !last_name || !role) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -47,10 +47,10 @@ export async function POST(request) {
 
     // Insert user; email and branch are optional
     const result = await query(
-      `INSERT INTO users (username, password_hash, role, email, branch_id, created_by_user_id)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING user_id, username, role, email, branch_id, created_by_user_id`,
-      [username, password_hash, role, email || null, branchid || null, creatorId]
+      `INSERT INTO users (username, password_hash, first_name, last_name, role, email, branch_id, created_by_user_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING user_id, username, first_name, last_name, role, email, branch_id, created_by_user_id`,
+      [username, password_hash, first_name, last_name, role, email || null, branchid || null, creatorId]
     );
 
     const user = result.rows[0];

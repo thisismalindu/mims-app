@@ -25,7 +25,7 @@ export default function Register({
         setSuccessMessage(result.message || 'User created successfully');
         setShowSuccessModal(true);
         // reset minimal fields; keep created_by_userid
-        setValues((v) => ({ ...v, username: '', password: '', role: '', email: '', branchId: '' }));
+        setValues((v) => ({ ...v, username: '', password: '', firstName: '', lastName: '', role: '', email: '', branchId: '' }));
       } else if (result && !result.ok) {
         setErrorMessage(result.error || 'Registration failed');
         setShowErrorModal(true);
@@ -146,6 +146,44 @@ export default function Register({
                 type="text"
                 required
                 autoComplete="username"
+                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6"
+              />
+            </div>
+          </div>
+
+          {/* First Name */}
+          <div>
+            <label htmlFor="firstName" className="block text-sm/6 font-medium text-gray-400">
+              First Name
+            </label>
+            <div className="mt-2">
+              <input
+                value={values.firstName}
+                onChange={(e) => setValues({ ...values, firstName: e.target.value })}
+                id="firstName"
+                name="firstName"
+                type="text"
+                required
+                autoComplete="given-name"
+                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6"
+              />
+            </div>
+          </div>
+
+          {/* Last Name */}
+          <div>
+            <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-400">
+              Last Name
+            </label>
+            <div className="mt-2">
+              <input
+                value={values.lastName}
+                onChange={(e) => setValues({ ...values, lastName: e.target.value })}
+                id="lastName"
+                name="lastName"
+                type="text"
+                required
+                autoComplete="family-name"
                 className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6"
               />
             </div>

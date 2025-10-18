@@ -21,6 +21,7 @@ import CreateSavingAccount from "./components/CreateSavingAccount";
 import RequestReport from "./components/RequestReport";
 import Profile from "./components/Profile";
 import CreateBranch from "./components/CreateBranch";
+import Agents from "./components/Agents";
 import CustomerDetails from "./components/CustomerDetails";
 import AccountDetails from "./components/AccountDetails";
 
@@ -90,11 +91,13 @@ export default function Page() {
     ];
 
     if (user.role === 'admin') {
+      // Admin: Dashboard, Users, Agents, Settings, Profile
       // Admin: Dashboard, Customers, Users, Branches, Settings, Profile
       return [
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
         { name: "Users", icon: <UsersIcon /> },
+        { name: "Agents", icon: <UserIcon /> },
         { name: "Branches", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
@@ -103,6 +106,7 @@ export default function Page() {
       return [
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
+        { name: "Agents", icon: <UserIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
@@ -148,6 +152,9 @@ export default function Page() {
       case "Dashboard":
         return <Dashboard changePage={changePage} />;
       case "Customers":
+        return <Customers changePage={changePage}/>;
+      case "Agents":
+        return <Agents changePage={changePage} />;
         return <Customers changePage={changePage} onSelectCustomer={(customerId) => {
           setSelectedCustomerId(customerId);
           changePage("CustomerDetails");
