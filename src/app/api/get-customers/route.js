@@ -11,22 +11,33 @@ export async function GET(request) {
       return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 });
     }
 
-    // If admin, return recent customers; otherwise restrict to customers created by the user (agent/manager)
+    // If admin, return all customers; if manager, return customers created by agents under them; if agent, return only their own customers
     let sql;
     let params = [];
 
     if (currentUser.role === 'admin') {
       sql = `SELECT customer_id, first_name, last_name, nic_number, phone_number, email, status
              FROM customer
-             ORDER BY created_at DESC
+             ORDER BY first_name ASC, last_name ASC
              LIMIT 500`;
+    } else if (currentUser.role === 'manager') {
+      // Manager sees customers created by agents who belong to them
+      const userId = currentUser.userID || currentUser.user_id;
+      sql = `SELECT customer_id, first_name, last_name, nic_number, phone_number, email, status
+             FROM customer
+             WHERE created_by_user_id IN (
+               SELECT user_id FROM users WHERE created_by_user_id = $1 AND role = 'agent'
+             )
+             ORDER BY first_name ASC, last_name ASC
+             LIMIT 500`;
+      params = [userId];
     } else {
-      // ensure we reference the correct property from getCurrentUser (userID)
+      // Agent sees only their own customers
       const userId = currentUser.userID || currentUser.user_id;
       sql = `SELECT customer_id, first_name, last_name, nic_number, phone_number, email, status
              FROM customer
              WHERE created_by_user_id = $1
-             ORDER BY created_at DESC
+             ORDER BY first_name ASC, last_name ASC
              LIMIT 500`;
       params = [userId];
     }
