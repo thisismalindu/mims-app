@@ -15,7 +15,7 @@ export async function GET(request) {
     }
 
     const result = await query(
-      `SELECT user_id, username, role, status, email, branch_id, created_at
+      `SELECT user_id, username, first_name, last_name, role, status, email, branch_id, created_at
        FROM users
        ORDER BY created_at DESC`
     );

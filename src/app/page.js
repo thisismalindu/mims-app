@@ -12,6 +12,8 @@ import SettingsPage from "./components/SettingsPage";
 import CreateCustomer from "./components/CreateCustomer";
 import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
+import CreateSavingAccount from "./components/CreateSavingAccount";
+import CreateFixedDeposit from "./components/CreateFixedDeposit";
 import CreateAccountPlan from "./components/CreateAccountPlan";
 
 import CreateFixedDepositPlan from "./components/CreateFixedDepositPlan";
@@ -19,11 +21,16 @@ import CreateSavingAccount from "./components/CreateSavingAccount";
 import RequestReport from "./components/RequestReport";
 import Profile from "./components/Profile";
 import CreateBranch from "./components/CreateBranch";
+import Agents from "./components/Agents";
+import CustomerDetails from "./components/CustomerDetails";
+import AccountDetails from "./components/AccountDetails";
 
 export default function Page() {
 
   const [activePage, setActivePage] = useState("Dashboard");
   const [user, setUser] = useState(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(null);
   
   useEffect(() => {
     const syncPageWithUrl = () => {
@@ -84,10 +91,13 @@ export default function Page() {
     ];
 
     if (user.role === 'admin') {
-      // Admin: Dashboard, Users, Settings, Profile
+      // Admin: Dashboard, Users, Agents, Settings, Profile
+      // Admin: Dashboard, Customers, Users, Branches, Settings, Profile
       return [
         ...commonStart,
+        { name: "Customers", icon: <UsersIcon /> },
         { name: "Users", icon: <UsersIcon /> },
+        { name: "Agents", icon: <UserIcon /> },
         { name: "Branches", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
@@ -96,6 +106,7 @@ export default function Page() {
       return [
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
+        { name: "Agents", icon: <UserIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
@@ -142,6 +153,29 @@ export default function Page() {
         return <Dashboard changePage={changePage} />;
       case "Customers":
         return <Customers changePage={changePage}/>;
+      case "Agents":
+        return <Agents changePage={changePage} />;
+        return <Customers changePage={changePage} onSelectCustomer={(customerId) => {
+          setSelectedCustomerId(customerId);
+          changePage("CustomerDetails");
+        }} />;
+      case "CustomerDetails":
+        return <CustomerDetails 
+          customerId={selectedCustomerId} 
+          changePage={changePage}
+          onSelectAccount={(accountType, accountId) => {
+            setSelectedAccount({ accountType, accountId });
+            changePage("AccountDetails");
+          }}
+          onBack={() => changePage("Customers")}
+        />;
+      case "AccountDetails":
+        return <AccountDetails 
+          accountType={selectedAccount?.accountType}
+          accountId={selectedAccount?.accountId}
+          changePage={changePage}
+          onBack={() => changePage("CustomerDetails")}
+        />;
       case "Accounts":
         return <Accounts />;
       case "Transactions":
@@ -158,6 +192,8 @@ export default function Page() {
         return <RequestReport changePage={changePage} />;
       case "Users":
         return <Users changePage={changePage} />;
+      case "CreateFixedDeposit":
+        return <CreateFixedDeposit changePage={changePage} />;
       case "Profile":
         return <Profile />;
       case "CreateBranch":

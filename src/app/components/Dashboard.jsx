@@ -72,7 +72,7 @@ export default function Dashboard({ changePage }) {
       {user ? (
         <div className="flex my-10 items-center">
           <h2 className="text-gray-900 text-2xl/9 font-bold tracking-tight">
-            Welcome, {user.username}!
+            Welcome, {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username}!
           </h2>
           <p className={`ml-4 text-white rounded-lg ${roleColors[user.role]} text-[8px] font-bold tracking-wide py-0.5 px-2`}>
             {user.role.toUpperCase()}

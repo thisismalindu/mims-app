@@ -61,6 +61,8 @@ CREATE TABLE users (
   user_id BIGSERIAL PRIMARY KEY,
   username text UNIQUE NOT NULL,
   password_hash text NOT NULL,
+  first_name text NOT NULL,
+  last_name text NOT NULL,
   role user_type NOT NULL,
   status status_enum NOT NULL DEFAULT 'active',
   email text UNIQUE,
@@ -159,6 +161,7 @@ CREATE TABLE transaction (
   fixed_deposit_account_id BIGINT REFERENCES fixed_deposit_account(fixed_deposit_account_id),
   transaction_type transaction_type_enum NOT NULL,
   amount NUMERIC(30,10) NOT NULL,
+  description varchar(25),
   transaction_time timestamptz DEFAULT now(),
   performed_by_user_id BIGINT REFERENCES users(user_id),
   status status_enum DEFAULT 'active',
@@ -275,5 +278,5 @@ BEGIN
 END$$;
 
 -- root user
-INSERT INTO users (username, password_hash, role, status)
-VALUES ('root', '$2b$10$LG206ujTzZxeIdIQdEbmluSMNsq0d5RrJNtfxPg8Nvz04u6xWmE36', 'admin', 'active');
+INSERT INTO users (username, password_hash, first_name, last_name, role, status)
+VALUES ('root', '$2b$10$LG206ujTzZxeIdIQdEbmluSMNsq0d5RrJNtfxPg8Nvz04u6xWmE36', 'Root', 'Administrator', 'admin', 'active');
