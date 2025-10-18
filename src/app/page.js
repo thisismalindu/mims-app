@@ -17,7 +17,6 @@ import CreateFixedDeposit from "./components/CreateFixedDeposit";
 import CreateAccountPlan from "./components/CreateAccountPlan";
 
 import CreateFixedDepositPlan from "./components/CreateFixedDepositPlan";
-import CreateSavingAccount from "./components/CreateSavingAccount"; 
 import RequestReport from "./components/RequestReport";
 import Profile from "./components/Profile";
 import CreateBranch from "./components/CreateBranch";
