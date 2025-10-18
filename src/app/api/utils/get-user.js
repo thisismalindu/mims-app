@@ -12,6 +12,8 @@ export async function getCurrentUser(request) {
       token,
       new TextEncoder().encode(process.env.JWT_SECRET)
     )
+    const userId = Number(payload.userId) 
+    if (isNaN(userId)) return null  
 
     return {
       username: payload.username,

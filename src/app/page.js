@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {UserIcon, HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTextIcon, ArrowRightStartOnRectangleIcon } from '@heroicons/react/24/outline'
+import {UserIcon, HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTextIcon, ArrowRightStartOnRectangleIcon, ChartBarIcon } from '@heroicons/react/24/outline'
 
 import Dashboard from "./components/Dashboard";
 import Customers from "./components/Customers";
@@ -14,6 +14,11 @@ import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
 import CreateAccountPlan from "./components/CreateAccountPlan";
 
+import CreateFixedDepositPlan from "./components/CreateFixedDepositPlan";
+import CreateSavingAccount from "./components/CreateSavingAccount"; 
+import RequestReport from "./components/RequestReport";
+import Profile from "./components/Profile";
+import CreateBranch from "./components/CreateBranch";
 
 export default function Page() {
 
@@ -83,12 +88,20 @@ export default function Page() {
       return [
         ...commonStart,
         { name: "Users", icon: <UsersIcon /> },
+        { name: "Branches", icon: <BanknotesIcon /> },
+        ...commonEnd,
+      ];
+    }
+    if (user.role === 'manager') { 
+      return [
+        ...commonStart,
+        { name: "Customers", icon: <UsersIcon /> },
+        { name: "Accounts", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
     }
 
-    if (user.role === 'manager' || user.role === 'agent') {
-      // Manager/Agent: Dashboard, Customers, Accounts, Transactions, Settings, Profile
+    if (user.role === 'agent') {
       return [
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
@@ -97,7 +110,7 @@ export default function Page() {
         ...commonEnd,
       ];
     }
-
+    
     // Fallback
     return [
       ...commonStart,
@@ -128,7 +141,7 @@ export default function Page() {
       case "Dashboard":
         return <Dashboard changePage={changePage} />;
       case "Customers":
-        return <Customers />;
+        return <Customers changePage={changePage}/>;
       case "Accounts":
         return <Accounts />;
       case "Transactions":
@@ -139,13 +152,23 @@ export default function Page() {
         return <CreateCustomer changePage={changePage} />;
       case "InitiateTransaction":
         return <InitiateTransaction changePage={changePage} />;
+      case "CreateSavingAccount":
+        return <CreateSavingAccount changePage={changePage} />;
+      case "RequestReport":
+        return <RequestReport changePage={changePage} />;
       case "Users":
         return <Users changePage={changePage} />;
+      case "Profile":
+        return <Profile />;
+      case "CreateBranch":
+        return <CreateBranch changePage={changePage} />;
       case "CreateUser":
         window.location.replace("/register");
         return null;
       case "CreateAccountPlan":
         return <CreateAccountPlan changePage={changePage} />;
+      case "CreateFixedDepositPlan":
+        return <CreateFixedDepositPlan changePage={changePage} />;
       default:
         return (
           <div className="bg-white rounded-lg p-6 shadow text-gray-700">
