@@ -165,6 +165,7 @@ CREATE TABLE transaction (
   fixed_deposit_account_id BIGINT REFERENCES fixed_deposit_account(fixed_deposit_account_id),
   transaction_type transaction_type_enum NOT NULL,
   amount NUMERIC(30,10) NOT NULL,
+  description varchar(25),
   transaction_time timestamptz DEFAULT now(),
   performed_by_user_id BIGINT REFERENCES users(user_id),
   status status_enum DEFAULT 'active',
