@@ -58,9 +58,14 @@ export default function Customers({ changePage, onSelectCustomer }) {
               onClick={() => onSelectCustomer(cust.customer_id)}
               className="px-4 py-3 bg-blue-500 text-white rounded-md font-semibold text-left hover:bg-blue-400 transition flex justify-between items-center"
             >
-              <span>
-                {cust.first_name} {cust.last_name}
-              </span>
+              <div>
+                <span className="text-lg">
+                  {cust.first_name} {cust.last_name}
+                </span>
+                <span className="text-sm opacity-80 ml-2">
+                  (ID: {cust.customer_id})
+                </span>
+              </div>
               <span className="text-sm italic opacity-80">View ➜</span>
             </button>
           ))}
