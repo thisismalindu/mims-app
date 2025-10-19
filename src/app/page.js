@@ -151,13 +151,12 @@ export default function Page() {
       case "Dashboard":
         return <Dashboard changePage={changePage} />;
       case "Customers":
-        return <Customers changePage={changePage}/>;
-      case "Agents":
-        return <Agents changePage={changePage} />;
         return <Customers changePage={changePage} onSelectCustomer={(customerId) => {
           setSelectedCustomerId(customerId);
           changePage("CustomerDetails");
         }} />;
+      case "Agents":
+        return <Agents changePage={changePage} />;
       case "CustomerDetails":
         return <CustomerDetails 
           customerId={selectedCustomerId} 
