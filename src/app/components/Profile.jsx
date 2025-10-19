@@ -282,20 +282,75 @@ export default function Profile() {
                   <p className="text-xs text-green-600 mt-2">Agents under your management</p>
                 </div>
 
-                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 border border-purple-200">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border border-green-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-purple-600 mb-1">Total Customers</p>
-                      <p className="text-4xl font-bold text-purple-700">{user.total_customers_created || 0}</p>
+                      <p className="text-sm font-medium text-green-600 mb-1">Total Customers</p>
+                      <p className="text-4xl font-bold text-green-700">{user.total_customers_created || 0}</p>
                     </div>
-                    <div className="w-16 h-16 rounded-full bg-purple-200 flex items-center justify-center">
-                      <UsersIcon className="w-8 h-8 text-purple-600" />
+                    <div className="w-16 h-16 rounded-full bg-green-200 flex items-center justify-center">
+                      <UsersIcon className="w-8 h-8 text-green-600" />
                     </div>
                   </div>
-                  <p className="text-xs text-purple-600 mt-2">From your agents' work</p>
+                  <p className="text-xs text-green-600 mt-2">From your agents' work</p>
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* System Statistics Card (for admins) */}
+      {user.role === 'admin' && (
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <UsersIcon className="w-6 h-6 text-red-500" />
+            System Overview
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Total Customers */}
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6 border border-red-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 rounded-full bg-red-200 flex items-center justify-center">
+                  <UsersIcon className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <p className="text-sm font-medium text-red-600 mb-1">Total Customers</p>
+              <p className="text-3xl font-bold text-red-700">{user.total_customers_in_system || 0}</p>
+            </div>
+
+            {/* Total Agents */}
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6 border border-red-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 rounded-full bg-red-200 flex items-center justify-center">
+                  <UserGroupIcon className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <p className="text-sm font-medium text-red-600 mb-1">Total Agents</p>
+              <p className="text-3xl font-bold text-red-700">{user.total_agents_in_system || 0}</p>
+            </div>
+
+            {/* Total Managers */}
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6 border border-red-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 rounded-full bg-red-200 flex items-center justify-center">
+                  <ShieldCheckIcon className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <p className="text-sm font-medium text-red-600 mb-1">Total Managers</p>
+              <p className="text-3xl font-bold text-red-700">{user.total_managers_in_system || 0}</p>
+            </div>
+
+            {/* Total Branches */}
+            <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6 border border-red-200">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-12 h-12 rounded-full bg-red-200 flex items-center justify-center">
+                  <BuildingOfficeIcon className="w-6 h-6 text-red-600" />
+                </div>
+              </div>
+              <p className="text-sm font-medium text-red-600 mb-1">Total Branches</p>
+              <p className="text-3xl font-bold text-red-700">{user.total_branches_in_system || 0}</p>
+            </div>
           </div>
         </div>
       )}

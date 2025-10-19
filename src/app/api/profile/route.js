@@ -32,7 +32,11 @@ export async function GET(request) {
         creator.last_name as created_by_last_name,
         creator.role as created_by_role,
         (SELECT COUNT(*) FROM customer WHERE created_by_user_id = u.user_id) as total_customers_created,
-        (SELECT COUNT(*) FROM users WHERE created_by_user_id = u.user_id AND role = 'agent') as total_agents_created
+        (SELECT COUNT(*) FROM users WHERE created_by_user_id = u.user_id AND role = 'agent') as total_agents_created,
+        (SELECT COUNT(*) FROM customer) as total_customers_in_system,
+        (SELECT COUNT(*) FROM users WHERE role = 'agent') as total_agents_in_system,
+        (SELECT COUNT(*) FROM users WHERE role = 'manager') as total_managers_in_system,
+        (SELECT COUNT(*) FROM branch) as total_branches_in_system
       FROM users u
       LEFT JOIN branch b ON u.branch_id = b.branch_id
       LEFT JOIN users creator ON u.created_by_user_id = creator.user_id
