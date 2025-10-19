@@ -23,6 +23,7 @@ import CreateBranch from "./components/CreateBranch";
 import Agents from "./components/Agents";
 import CustomerDetails from "./components/CustomerDetails";
 import AccountDetails from "./components/AccountDetails";
+import ProcessFDInterest from "./components/ProcessFDInterest";
 
 export default function Page() {
 
@@ -197,6 +198,9 @@ export default function Page() {
         return <Profile />;
       case "CreateBranch":
         return <CreateBranch changePage={changePage} />;
+      case "CreateAgent":
+        window.location.replace("/register");
+        return null;
       case "CreateUser":
         window.location.replace("/register");
         return null;
@@ -204,6 +208,8 @@ export default function Page() {
         return <CreateAccountPlan changePage={changePage} />;
       case "CreateFixedDepositPlan":
         return <CreateFixedDepositPlan changePage={changePage} />;
+      case "ProcessFDInterest":
+        return <ProcessFDInterest changePage={changePage} />;
       default:
         return (
           <div className="bg-white rounded-lg p-6 shadow text-gray-700">

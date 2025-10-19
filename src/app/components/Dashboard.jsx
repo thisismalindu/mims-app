@@ -36,10 +36,11 @@ export default function Dashboard({ changePage }) {
   };
   // Define role-specific duties
   const baseDuties = {
-    createAgent: { name: "Create Agent", action: "CreateUser", description: "Add a new agent to the system" },
+    createAgent: { name: "Create Agent", action: "CreateAgent", description: "Add a new agent to the system" },
     requestReport: { name: "Request Report", action: "RequestReport", description: "Request a system report" },
     createAccountPlan: { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
     createFixedDepositPlan: { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
+    processFDInterest: { name: "Process FD Interest", action: "ProcessFDInterest", description: "Calculate and credit FD interest payments" },
     createCustomer: { name: "Create Customer", action: "CreateCustomer", description: "Add a new customer to the system" },
     createSavingAccount: { name: "Create Saving Account", action: "CreateSavingAccount", description: "Open a new savings account" },
     createFixedDeposit: { name: "Create Fixed Deposit", action: "CreateFixedDeposit", description: "Start a new fixed deposit" },
@@ -56,6 +57,7 @@ export default function Dashboard({ changePage }) {
       baseDuties.requestReport,
       baseDuties.createAccountPlan,
       baseDuties.createFixedDepositPlan,
+      baseDuties.processFDInterest,
     ],
     agent: [
       baseDuties.createCustomer,
