@@ -10,7 +10,10 @@ export function middleware(request) {
   const searchParams = request.nextUrl.searchParams;
 
   console.log('pathname: ', pathname);
-
+  if (pathname.startsWith('/api/calc-savings-interest')) {
+    console.log('✅ Bypassing auth for /api/calc-savings-interest');
+    return NextResponse.next();
+  }
   // === Case 1: Login page ===
   if (pathname.startsWith('/login')) {
     if (token) {
@@ -69,6 +72,6 @@ async function verifyToken(token) {
 
 export const config = {
   matcher: [
-    '/((?!api/login|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api/calc-savings-interest|api/login|_next/static|_next/image|favicon.ico).*)',
   ],
 };
