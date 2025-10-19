@@ -35,7 +35,9 @@ export async function GET(request) {
           creator.first_name as creator_first_name,
           creator.last_name as creator_last_name,
           u.created_at,
-          COUNT(c.customer_id) as customer_count
+          COUNT(c.customer_id) as customer_count,
+          ARRAY_AGG(c.customer_id) FILTER (WHERE c.customer_id IS NOT NULL) as customer_ids,
+          ARRAY_AGG(c.first_name || ' ' || c.last_name) FILTER (WHERE c.customer_id IS NOT NULL) as customer_names
         FROM users u
         LEFT JOIN customer c ON u.user_id = c.created_by_user_id
         LEFT JOIN users creator ON u.created_by_user_id = creator.user_id
@@ -58,7 +60,9 @@ export async function GET(request) {
           u.status,
           u.branch_id,
           u.created_at,
-          COUNT(c.customer_id) as customer_count
+          COUNT(c.customer_id) as customer_count,
+          ARRAY_AGG(c.customer_id) FILTER (WHERE c.customer_id IS NOT NULL) as customer_ids,
+          ARRAY_AGG(c.first_name || ' ' || c.last_name) FILTER (WHERE c.customer_id IS NOT NULL) as customer_names
         FROM users u
         LEFT JOIN customer c ON u.user_id = c.created_by_user_id
         WHERE u.role = 'agent' AND u.created_by_user_id = $1
