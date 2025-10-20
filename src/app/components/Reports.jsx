@@ -113,8 +113,13 @@ export default function Reports({ changePage }) {
         <div className="bg-white rounded-xl p-6 shadow mt-6 print:shadow-none">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">{data.title}</h2>
-            <button onClick={onPrint} className="rounded-md px-3 py-1.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500">Print</button>
+            <div className="mt-6 flex gap-2 ">
+            <a href={`/reports/print?id=${request.id}`} target="_blank" rel="noreferrer" className="rounded-md px-3 py-1.5 text-sm font-semibold text-white bg-gray-700 hover:bg-gray-600">Open Print View</a>
+              <a href={`/api/report-requests/${request.id}/export`} className="rounded-md px-3 py-1.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500">Export CSV</a>
+
           </div>
+          </div>
+          
           <div className="text-sm text-gray-600 mb-4">
             <div><span className="font-medium">Request ID:</span> {request.id}</div>
             <div><span className="font-medium">Type:</span> {request.typeName} ({request.typeKey})</div>
@@ -153,9 +158,7 @@ export default function Reports({ changePage }) {
               <div>Total: {data.totals.sum}</div>
             </div>
           )}
-          <div className="mt-6">
-            <a href={`/reports/print?id=${request.id}`} target="_blank" rel="noreferrer" className="rounded-md px-3 py-1.5 text-sm font-semibold text-white bg-gray-700 hover:bg-gray-600">Open Print View</a>
-          </div>
+          
         </div>
       </div>
     );

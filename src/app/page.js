@@ -157,6 +157,7 @@ export default function Page() {
         { name: "Agents", icon: <UserIcon /> },
         { name: "Customers", icon: <UsersIcon /> },
         { name: "Branches", icon: <BanknotesIcon /> },
+        { name: "Reports", icon: <ChartBarIcon /> },
         ...commonEnd,
       ];
     }

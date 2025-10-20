@@ -26,13 +26,31 @@ export async function POST(request) {
       return new Response(JSON.stringify({ error: 'User not found' }), { status: 404 });
     }
 
-    // Validate report type exists
-    const tres = await query('SELECT report_type_id FROM report_type WHERE key = $1', [report_type_key]);
+    // Validate report type exists, auto-seed known keys if missing
+    let tres = await query('SELECT report_type_id FROM report_type WHERE key = $1', [report_type_key]);
     console.log('Report type query result:', tres.rows);
-    const t = tres.rows?.[0];
+    let t = tres.rows?.[0];
     if (!t) {
-      console.log('Invalid report type:', report_type_key);
-      return new Response(JSON.stringify({ error: 'Invalid report type' }), { status: 400 });
+      const known = {
+        agent_transactions: { name: 'Agent Transactions', description: 'Transactions performed by an agent in a date range' },
+        account_summary: { name: 'Account Summary', description: 'Transactions and details for a savings account' },
+        active_fds: { name: 'Active Fixed Deposits', description: 'List of active fixed deposits' },
+        monthly_interest_summary: { name: 'Monthly Interest Summary', description: 'Interest transaction aggregation by month' },
+        customer_activity: { name: 'Customer Activity', description: 'All activity across a customer\'s accounts' },
+        branch_daily_summary: { name: 'Branch Daily Summary', description: 'Daily totals by transaction type in a branch' },
+        dormant_accounts: { name: 'Dormant Accounts', description: 'Accounts with no activity for N days' },
+        fd_maturity_schedule: { name: 'FD Maturity Schedule', description: 'Upcoming fixed deposit maturity/interest dates' }
+      };
+      const seed = known[report_type_key];
+      if (!seed) {
+        console.log('Invalid report type:', report_type_key);
+        return new Response(JSON.stringify({ error: 'Invalid report type' }), { status: 400 });
+      }
+      const ins = await query(
+        'INSERT INTO report_type (key, name, description) VALUES ($1, $2, $3) RETURNING report_type_id',
+        [report_type_key, seed.name, seed.description]
+      );
+      t = ins.rows?.[0];
     }
 
     // Authorize parameters based on report type
@@ -65,7 +83,7 @@ export async function POST(request) {
       }
     }
 
-    if (report_type_key === 'account_summary' && params.accountNumber) {
+  if (report_type_key === 'account_summary' && params.accountNumber) {
       const accId = Number(params.accountNumber);
       console.log('Account number:', accId);
       if (!Number.isInteger(accId)) {
@@ -85,7 +103,34 @@ export async function POST(request) {
       }
     }
 
-    if (report_type_key === 'customer_activity' && params.customerId) {
+  if (report_type_key === 'customer_activity' && params.customerId) {
+    // Branch daily summary: manager/admin only, date required, auto-scoped to manager branch
+    if (report_type_key === 'branch_daily_summary') {
+      if (!parameters?.date) {
+        return new Response(JSON.stringify({ error: 'date is required' }), { status: 400 });
+      }
+      // no extra validation needed; uses manager's branch
+    }
+
+    // Dormant accounts: daysWithoutActivity optional, numeric; scoped to manager branch
+    if (report_type_key === 'dormant_accounts') {
+      if (parameters?.daysWithoutActivity && !Number.isFinite(Number(parameters.daysWithoutActivity))) {
+        return new Response(JSON.stringify({ error: 'daysWithoutActivity must be a number' }), { status: 400 });
+      }
+    }
+
+    // FD maturity schedule: optional startDate/endDate
+    if (report_type_key === 'fd_maturity_schedule') {
+      if (parameters?.startDate && isNaN(new Date(parameters.startDate).getTime())) {
+        return new Response(JSON.stringify({ error: 'Invalid startDate' }), { status: 400 });
+      }
+      if (parameters?.endDate && isNaN(new Date(parameters.endDate).getTime())) {
+        return new Response(JSON.stringify({ error: 'Invalid endDate' }), { status: 400 });
+      }
+      if (parameters?.startDate && parameters?.endDate && new Date(parameters.startDate) > new Date(parameters.endDate)) {
+        return new Response(JSON.stringify({ error: 'startDate must be before endDate' }), { status: 400 });
+      }
+    }
       const custId = Number(params.customerId);
       console.log('Customer id:', custId);
       if (!Number.isInteger(custId)) {

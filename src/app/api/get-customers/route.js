@@ -27,7 +27,8 @@ export async function GET(request) {
                c.created_by_user_id,
                u.first_name as agent_first_name,
                u.last_name as agent_last_name,
-               MIN(sa.branch_id) as branch_id,
+               /* Prefer explicit customer.branch_id (set on creation) and fallback to any linked account branch */
+               COALESCE(c.branch_id, MIN(sa.branch_id)) as branch_id,
                ARRAY_AGG(DISTINCT LPAD(sa.branch_id::text, 3, '0') || LPAD(sa.savings_account_id::text, 7, '0')) 
                  FILTER (WHERE sa.savings_account_id IS NOT NULL) as account_numbers
              FROM customer c
@@ -36,7 +37,7 @@ export async function GET(request) {
              LEFT JOIN savings_account sa ON ca.savings_account_id = sa.savings_account_id
              GROUP BY c.customer_id, c.first_name, c.last_name, c.nic_number, 
                       c.phone_number, c.email, c.status, c.created_by_user_id,
-                      u.first_name, u.last_name
+                      u.first_name, u.last_name, c.branch_id
              ORDER BY c.first_name ASC, c.last_name ASC
              LIMIT 500`;
     } else if (currentUser.role === 'manager') {
@@ -53,7 +54,7 @@ export async function GET(request) {
                c.created_by_user_id,
                u.first_name as agent_first_name,
                u.last_name as agent_last_name,
-               MIN(sa.branch_id) as branch_id,
+               COALESCE(c.branch_id, MIN(sa.branch_id)) as branch_id,
                ARRAY_AGG(DISTINCT LPAD(sa.branch_id::text, 3, '0') || LPAD(sa.savings_account_id::text, 7, '0')) 
                  FILTER (WHERE sa.savings_account_id IS NOT NULL) as account_numbers
              FROM customer c
@@ -65,7 +66,7 @@ export async function GET(request) {
              )
              GROUP BY c.customer_id, c.first_name, c.last_name, c.nic_number, 
                       c.phone_number, c.email, c.status, c.created_by_user_id,
-                      u.first_name, u.last_name
+                      u.first_name, u.last_name, c.branch_id
              ORDER BY c.first_name ASC, c.last_name ASC
              LIMIT 500`;
       params = [userId];
@@ -81,7 +82,7 @@ export async function GET(request) {
                c.email, 
                c.status,
                c.created_by_user_id,
-               MIN(sa.branch_id) as branch_id,
+               COALESCE(c.branch_id, MIN(sa.branch_id)) as branch_id,
                ARRAY_AGG(DISTINCT LPAD(sa.branch_id::text, 3, '0') || LPAD(sa.savings_account_id::text, 7, '0')) 
                  FILTER (WHERE sa.savings_account_id IS NOT NULL) as account_numbers
              FROM customer c
@@ -89,7 +90,7 @@ export async function GET(request) {
              LEFT JOIN savings_account sa ON ca.savings_account_id = sa.savings_account_id
              WHERE c.created_by_user_id = $1
              GROUP BY c.customer_id, c.first_name, c.last_name, c.nic_number, 
-                      c.phone_number, c.email, c.status, c.created_by_user_id
+                      c.phone_number, c.email, c.status, c.created_by_user_id, c.branch_id
              ORDER BY c.first_name ASC, c.last_name ASC
              LIMIT 500`;
       params = [userId];

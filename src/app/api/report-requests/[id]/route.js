@@ -13,7 +13,7 @@ async function getRequestById(id) {
   return rows[0];
 }
 
-async function buildReportData(reqRow) {
+export async function buildReportData(reqRow) {
   const type = reqRow.report_type_key;
   const p = reqRow.parameters || {};
 
@@ -154,6 +154,78 @@ async function buildReportData(reqRow) {
     );
     const cust = await query('SELECT customer_id, first_name, last_name, email, phone_number FROM customer WHERE customer_id = $1', [custId]);
     return { title: 'Customer Activity', rows, context: { customer: cust.rows?.[0] || null, accounts: ids } };
+  }
+
+  // New: Branch daily summary (date required); sums deposits/withdrawals/interest for the branch
+  if (type === 'branch_daily_summary') {
+    const branchId = reqRow.branch_id;
+    const date = p.date ? new Date(p.date) : null;
+    if (!branchId || !date || isNaN(date.getTime())) {
+      return { title: 'Branch Daily Summary', rows: [] };
+    }
+    const start = new Date(date.setHours(0,0,0,0)).toISOString();
+    const end = new Date(new Date(start).getTime() + 24*3600*1000).toISOString();
+    const { rows } = await query(
+      `SELECT transaction_type,
+              COUNT(*) as count,
+              SUM(amount) as total
+         FROM transaction t
+         JOIN savings_account sa ON sa.savings_account_id = t.savings_account_id
+        WHERE sa.branch_id = $1 AND t.transaction_time >= $2 AND t.transaction_time < $3
+        GROUP BY transaction_type
+        ORDER BY transaction_type`,
+      [branchId, start, end]
+    );
+    return { title: 'Branch Daily Summary', rows, context: { branch_id: branchId, date: p.date } };
+  }
+
+  // New: Dormant accounts (no activity for N days) within the manager's branch
+  if (type === 'dormant_accounts') {
+    const branchId = reqRow.branch_id;
+    const days = Number(p.daysWithoutActivity || 90);
+    const since = new Date(Date.now() - days*24*3600*1000).toISOString();
+    const { rows } = await query(
+      `WITH last_tx AS (
+         SELECT t.savings_account_id, MAX(t.transaction_time) AS last_activity
+           FROM transaction t
+           GROUP BY t.savings_account_id
+       )
+       SELECT sa.savings_account_id, sa.branch_id, sa.balance,
+              sap.name AS plan_name,
+              lt.last_activity
+         FROM savings_account sa
+         LEFT JOIN last_tx lt ON lt.savings_account_id = sa.savings_account_id
+         LEFT JOIN savings_account_plan sap ON sap.savings_account_plan_id = sa.savings_account_plan_id
+        WHERE sa.branch_id = $1 AND (lt.last_activity IS NULL OR lt.last_activity < $2)
+        ORDER BY lt.last_activity NULLS FIRST, sa.savings_account_id
+        LIMIT 5000`,
+      [branchId, since]
+    );
+    return { title: `Dormant Accounts (>${days} days)`, rows, context: { branch_id: branchId, since } };
+  }
+
+  // New: Fixed Deposit maturity schedule within branch in a date range
+  if (type === 'fd_maturity_schedule') {
+    const branchId = reqRow.branch_id;
+    const start = p.startDate ? new Date(p.startDate) : null;
+    const end = p.endDate ? new Date(p.endDate) : null;
+    const params = [branchId];
+    let where = 's.branch_id = $1';
+    if (start) { params.push(start.toISOString()); where += ` AND f.next_interest_date >= $${params.length}`; }
+    if (end) { params.push(new Date(end.getTime() + 24*3600*1000).toISOString()); where += ` AND f.next_interest_date < $${params.length}`; }
+    const { rows } = await query(
+      `SELECT f.fixed_deposit_account_id, f.amount, f.start_date, f.next_interest_date, f.status,
+              s.savings_account_id, s.branch_id,
+              p.name AS plan_name, p.interest_rate
+         FROM fixed_deposit_account f
+         JOIN savings_account s ON s.savings_account_id = f.savings_account_id
+         LEFT JOIN fixed_deposit_account_plan p ON p.fixed_deposit_account_plan_id = f.fixed_deposit_account_plan_id
+        WHERE ${where}
+        ORDER BY f.next_interest_date NULLS LAST
+        LIMIT 5000`,
+      params
+    );
+    return { title: 'Fixed Deposit Maturity Schedule', rows, context: { branch_id: branchId, dateRange: { start: p.startDate || null, end: p.endDate || null } } };
   }
 
   return { title: 'Unknown Report', rows: [] };

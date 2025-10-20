@@ -36,10 +36,10 @@ export default function Customers({ changePage, onSelectCustomer }) {
     fetchCurrentUser();
   }, []);
 
-  // Fetch branches for admin
+  // Fetch branches 
   useEffect(() => {
     const fetchBranches = async () => {
-      if (currentUser?.role !== 'admin') return;
+      // if (currentUser?.role !== 'admin') return;
       
       try {
         const res = await fetch('/api/get-branches');

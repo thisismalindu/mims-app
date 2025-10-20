@@ -10,6 +10,8 @@ export default function RequestReport({ changePage }) {
     endDate: "",
     accountNumber: "",
     customerId: "",
+    date: "",
+    daysWithoutActivity: "90",
   });
   const [loading, setLoading] = useState(false);
 
@@ -35,6 +37,13 @@ export default function RequestReport({ changePage }) {
       params.accountNumber = formData.accountNumber;
     } else if (reportType === "customer_activity") {
       params.customerId = formData.customerId;
+    } else if (reportType === "branch_daily_summary") {
+      params.date = formData.date;
+    } else if (reportType === "dormant_accounts") {
+      params.daysWithoutActivity = formData.daysWithoutActivity;
+    } else if (reportType === "fd_maturity_schedule") {
+      params.startDate = formData.startDate;
+      params.endDate = formData.endDate;
     }
 
     const dataToSend = {
@@ -64,6 +73,8 @@ export default function RequestReport({ changePage }) {
         endDate: "",
         accountNumber: "",
         customerId: "",
+        date: "",
+        daysWithoutActivity: "90",
       });
       setReportType("");
     } catch (error) {
@@ -201,6 +212,59 @@ export default function RequestReport({ changePage }) {
               required
               className="rounded-md bg-white px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6 w-full"
             />
+          </div>
+        )}
+
+        {reportType === "branch_daily_summary" && (
+          <div className="flex flex-col mb-4">
+            <label className="text-sm/6 font-medium text-gray-400">Date:</label>
+            <input
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleInputChange}
+              required
+              className="rounded-md bg-white px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6 w-full"
+            />
+          </div>
+        )}
+
+        {reportType === "dormant_accounts" && (
+          <div className="flex flex-col mb-4">
+            <label className="text-sm/6 font-medium text-gray-400">Days without activity:</label>
+            <input
+              type="number"
+              min="1"
+              name="daysWithoutActivity"
+              value={formData.daysWithoutActivity}
+              onChange={handleInputChange}
+              className="rounded-md bg-white px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6 w-full"
+            />
+          </div>
+        )}
+
+        {reportType === "fd_maturity_schedule" && (
+          <div className="flex gap-2 mb-4">
+            <div className="flex-1 flex flex-col">
+              <label className="text-sm/6 font-medium text-gray-400">Start Date:</label>
+              <input
+                type="date"
+                name="startDate"
+                value={formData.startDate}
+                onChange={handleInputChange}
+                className="rounded-md bg-white px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6 w-full"
+              />
+            </div>
+            <div className="flex-1 flex flex-col">
+              <label className="text-sm/6 font-medium text-gray-400">End Date:</label>
+              <input
+                type="date"
+                name="endDate"
+                value={formData.endDate}
+                onChange={handleInputChange}
+                className="rounded-md bg-white px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6 w-full"
+              />
+            </div>
           </div>
         )}
 
