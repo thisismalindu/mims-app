@@ -203,3 +203,39 @@ If you need help with the repository, open an issue or reach out to the maintain
 License
 
 This project is licensed under the MIT License (see `LICENSE` in the repo).
+## Setting up initial user accounts
+
+For security, this repository does **not** include any default password hashes for the example users in the SQL schema. You must generate your own password hashes before inserting users into the database.
+
+To create initial users (admin, agent, manager), use the provided `generate-hash.js` script to generate bcrypt hashes for your chosen passwords:
+
+1. Run the script and enter your desired password when prompted:
+
+  ```bash
+  node generate-hash.js
+  ```
+
+  The script will output a bcrypt hash string.
+
+2. In your SQL insert statements (e.g., in `app/api/setup-database/database-schema.sql`), replace the `password_hash` values with the hashes you generated. For example:
+
+  ```sql
+  -- admin user
+  INSERT INTO users (username, password_hash, first_name, last_name, role, status)
+  VALUES ('admin', '<adminhash>', 'AdminUserPerson', 'Btrustable', 'admin', 'active');
+
+  -- agent user
+  INSERT INTO users (username, password_hash, first_name, last_name, role, status)
+  VALUES ('agent', '<agenthash>', 'AgentUserPerson', 'Btrustable', 'agent', 'active');
+
+  -- manager user
+  INSERT INTO users (username, password_hash, first_name, last_name, role, status)
+  VALUES ('manager', '<managerhash>', 'ManagerUserPerson', 'Btrustable', 'manager', 'active');
+  ```
+
+  Replace `<adminhash>`, `<agenthash>`, and `<managerhash>` with the actual bcrypt hashes you generated.
+
+**Note:**  
+- Do **not** commit your generated hashes or real passwords to version control.
+- This approach ensures that only you know the initial passwords for these accounts.
+- If you need to reset a password, generate a new hash and update the corresponding user in the database.

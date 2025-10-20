@@ -279,13 +279,13 @@ END$$;
 
 -- admin user
 INSERT INTO users (username, password_hash, first_name, last_name, role, status)
-VALUES ('admin', 'adminhash', 'AdminUserPerson', 'Btrustable', 'admin', 'active');
+VALUES ('admin', '<adminhash>', 'AdminUserPerson', 'Btrustable', 'admin', 'active');
 
 -- agent user
 INSERT INTO users (username, password_hash, first_name, last_name, role, status)
-VALUES ('agent', 'agenthash', 'AgentUserPerson', 'Btrustable', 'agent', 'active');
+VALUES ('agent', '<agenthash>', 'AgentUserPerson', 'Btrustable', 'agent', 'active');
 
 -- manager user
 INSERT INTO users (username, password_hash, first_name, last_name, role, status)
-VALUES ('manager', 'managerhash', 'ManagerUserPerson', 'Btrustable', 'manager', 'active');
+VALUES ('manager', '<managerhash>', 'ManagerUserPerson', 'Btrustable', 'manager', 'active');
 
