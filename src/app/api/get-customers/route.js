@@ -38,7 +38,7 @@ export async function GET(request) {
              GROUP BY c.customer_id, c.first_name, c.last_name, c.nic_number, 
                       c.phone_number, c.email, c.status, c.created_by_user_id,
                       u.first_name, u.last_name, c.branch_id
-             ORDER BY c.first_name ASC, c.last_name ASC
+             ORDER BY c.customer_id ASC
              LIMIT 500`;
     } else if (currentUser.role === 'manager') {
       // Manager sees customers created by agents who belong to them
@@ -67,7 +67,7 @@ export async function GET(request) {
              GROUP BY c.customer_id, c.first_name, c.last_name, c.nic_number, 
                       c.phone_number, c.email, c.status, c.created_by_user_id,
                       u.first_name, u.last_name, c.branch_id
-             ORDER BY c.first_name ASC, c.last_name ASC
+             ORDER BY c.customer_id ASC
              LIMIT 500`;
       params = [userId];
     } else {
@@ -91,7 +91,7 @@ export async function GET(request) {
              WHERE c.created_by_user_id = $1
              GROUP BY c.customer_id, c.first_name, c.last_name, c.nic_number, 
                       c.phone_number, c.email, c.status, c.created_by_user_id, c.branch_id
-             ORDER BY c.first_name ASC, c.last_name ASC
+             ORDER BY c.customer_id ASC
              LIMIT 500`;
       params = [userId];
     }

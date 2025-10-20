@@ -6,6 +6,7 @@ export default function CustomerDetails({ customerId, changePage, onSelectAccoun
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [cid, setCid] = useState(customerId || null);
 
   // Fetch current user to check role
   useEffect(() => {
@@ -24,10 +25,26 @@ export default function CustomerDetails({ customerId, changePage, onSelectAccoun
   }, []);
 
   useEffect(() => {
+    // sync from URL on mount
+    if (!customerId) {
+      const params = new URLSearchParams(window.location.search);
+      const idFromUrl = params.get('customerId');
+      if (idFromUrl) setCid(Number(idFromUrl));
+    } else {
+      setCid(customerId);
+      // ensure URL reflects it (clean slate to avoid leaking other params)
+      const params = new URLSearchParams();
+      params.set('page', 'CustomerDetails');
+      params.set('customerId', String(customerId));
+      window.history.replaceState({}, '', '?' + params.toString());
+    }
+  }, [customerId]);
+
+  useEffect(() => {
     const fetchCustomerDetails = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/get-customer-details?customer_id=${customerId}`);
+        const res = await fetch(`/api/get-customer-details?customer_id=${cid}`);
         if (!res.ok) throw new Error("Failed to fetch customer details");
         const result = await res.json();
         if (!result.success) throw new Error(result.error);
@@ -40,10 +57,10 @@ export default function CustomerDetails({ customerId, changePage, onSelectAccoun
       }
     };
 
-    if (customerId) {
+    if (cid) {
       fetchCustomerDetails();
     }
-  }, [customerId]);
+  }, [cid]);
 
   // keep animation class consistent with Dashboard.jsx
   const pulseClass = "animate-pulse";

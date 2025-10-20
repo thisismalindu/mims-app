@@ -1,16 +1,64 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AccountDetails({ accountType, accountId, changePage, onBack }) {
+  const router = useRouter();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [atype, setAtype] = useState(accountType || null);
+  const [aid, setAid] = useState(accountId || null);
+  const [cid, setCid] = useState(null); // customerId from URL for back nav
+
+  const handleBack = useCallback(() => {
+    // Prefer a custom handler from parent
+    // if (typeof onBack === 'function') {
+    //   onBack();
+    //   return;
+    // }
+    // Use browser history when available
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    // Fallback to Accounts page
+    if (typeof changePage === 'function') {
+      changePage('Accounts');
+    }
+  }, [onBack, router, changePage]);
+
+  useEffect(() => {
+    // On mount/prop change, sync from props or URL and ensure URL reflects state
+    const params = new URLSearchParams(window.location.search);
+    const urlType = params.get('accountType');
+    const urlId = params.get('accountId');
+    const urlCid = params.get('customerId');
+
+    if (accountType) setAtype(accountType);
+    else if (urlType) setAtype(urlType);
+
+    if (accountId) setAid(accountId);
+    else if (urlId) setAid(Number(urlId));
+
+    if (urlCid) setCid(Number(urlCid));
+
+    // If props provided, reflect in URL so refresh keeps state (clean slate)
+    if (accountType || accountId) {
+      const newParams = new URLSearchParams();
+      newParams.set('page', 'AccountDetails');
+      if (accountType) newParams.set('accountType', String(accountType));
+      if (accountId) newParams.set('accountId', String(accountId));
+      if (urlCid) newParams.set('customerId', urlCid);
+      window.history.replaceState({}, '', '?' + newParams.toString());
+    }
+  }, [accountType, accountId]);
 
   useEffect(() => {
     const fetchAccountDetails = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/get-account-details?type=${accountType}&account_id=${accountId}`);
+        const res = await fetch(`/api/get-account-details?type=${atype}&account_id=${aid}`);
         if (!res.ok) throw new Error("Failed to fetch account details");
         const result = await res.json();
         if (!result.success) throw new Error(result.error);
@@ -23,10 +71,10 @@ export default function AccountDetails({ accountType, accountId, changePage, onB
       }
     };
 
-    if (accountType && accountId) {
+    if (atype && aid) {
       fetchAccountDetails();
     }
-  }, [accountType, accountId]);
+  }, [atype, aid]);
 
   // consistent animation class
   const pulseClass = "animate-pulse";
@@ -100,7 +148,7 @@ export default function AccountDetails({ accountType, accountId, changePage, onB
     return (
       <div className="px-6 py-12">
         <a
-          onClick={onBack}
+          onClick={handleBack}
           className="rounded-md font-medium tracking-tight text-blue-500 cursor-pointer hover:text-blue-600"
         >
           ⬅ back
@@ -115,14 +163,14 @@ export default function AccountDetails({ accountType, accountId, changePage, onB
   return (
     <div className="px-6 py-8">
       <a
-        onClick={onBack}
+        onClick={handleBack}
         className="rounded-md font-medium tracking-tight text-blue-500 cursor-pointer hover:text-blue-600"
       >
         ⬅ back
       </a>
 
       <h2 className="mt-6 text-2xl font-bold tracking-tight text-gray-900">
-        {accountType === 'savings' ? 'Savings Account Details' : 'Fixed Deposit Account Details'}
+        {atype === 'savings' ? 'Savings Account Details' : 'Fixed Deposit Account Details'}
       </h2>
 
       {/* Account Information */}
@@ -132,13 +180,13 @@ export default function AccountDetails({ accountType, accountId, changePage, onB
           <div>
             <p className="text-sm font-medium text-gray-500">Account Number</p>
             <p className="mt-1 text-lg font-semibold text-gray-900">
-              {accountType === 'savings' ? account.account_number : account.fd_account_number}
+              {atype === 'savings' ? account.account_number : account.fd_account_number}
             </p>
           </div>
           <div>
             <p className="text-sm font-medium text-gray-500">Account Type</p>
             <p className="mt-1 text-lg font-semibold text-blue-600">
-              {accountType === 'savings' ? 'SAVINGS ACCOUNT' : 'FIXED DEPOSIT'}
+              {atype === 'savings' ? 'SAVINGS ACCOUNT' : 'FIXED DEPOSIT'}
             </p>
           </div>
           <div>
@@ -151,7 +199,7 @@ export default function AccountDetails({ accountType, accountId, changePage, onB
               {account.interest_rate ? `${Number(account.interest_rate).toFixed(2)}%` : 'N/A'}
             </p>
           </div>
-          {accountType === 'savings' ? (
+          {atype === 'savings' ? (
             <>
               <div>
                 <p className="text-sm font-medium text-gray-500">Balance</p>
@@ -242,10 +290,10 @@ export default function AccountDetails({ accountType, accountId, changePage, onB
       </div>
 
       {/* Recent Transactions - Always show for savings, only show for FD if transactions exist */}
-      {(accountType === 'savings' || (accountType === 'fd' && transactions.length > 0)) && (
+      {(atype === 'savings' || (atype === 'fd' && transactions.length > 0)) && (
         <div className="mt-6 bg-white rounded-lg shadow-md p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            {accountType === 'savings' ? 'Recent Transactions (Last 10)' : 'Transactions'}
+            {atype === 'savings' ? 'Recent Transactions (Last 10)' : 'Transactions'}
           </h3>
           {transactions.length > 0 ? (
             <div className="overflow-x-auto">
