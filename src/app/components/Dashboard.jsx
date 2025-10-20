@@ -35,25 +35,34 @@ export default function Dashboard({ changePage }) {
     agent: 'bg-blue-400',
   };
   // Define role-specific duties
+  const baseDuties = {
+    createAgent: { name: "Create Agent", action: "CreateAgent", description: "Add a new agent to the system" },
+    requestReport: { name: "Request Report", action: "RequestReport", description: "Request a system report" },
+    createAccountPlan: { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
+    createFixedDepositPlan: { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
+    interestDistributions: { name: "Interest Distributions", action: "InterestDistributions", description: "View interest distribution graphs" },
+    createCustomer: { name: "Create Customer", action: "CreateCustomer", description: "Add a new customer to the system" },
+    createSavingAccount: { name: "Create Saving Account", action: "CreateSavingAccount", description: "Open a new savings account" },
+    createFixedDeposit: { name: "Create Fixed Deposit", action: "CreateFixedDeposit", description: "Start a new fixed deposit" },
+    initiateTransaction: { name: "Initiate Transaction", action: "InitiateTransaction", description: "Process a new transaction" },
+    createUser: { name: "Create User", action: "CreateUser", description: "Add a new user to the system" },
+    generateReports: { name: "Generate Reports", action: "GenerateReports", description: "View and generate system reports" },
+    createBranch: { name: "Create Branch", action: "CreateBranch", description: "Add a new branch to the system" },
+  };
+
   const roleDuties = {
-    admin: [
-      { name: "Create User", action: "CreateUser", description: "Add a new user to the system" },
-      { name: "Generate Reports", action: "GenerateReports", description: "View and generate system reports" },
-      { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
-      { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
-      { name: "Create Branch", action: "CreateBranch", description: "Add a new branch to the system" },
-    ],
+    admin: Object.values(baseDuties),
     manager: [
-      { name: "Create Agent", action: "CreateUser", description: "Add a new agent to the system" },
-      { name: "Request Report", action: "RequestReport", description: "Request a system report" },
-      { name: "Create Account Plan", action: "CreateAccountPlan", description: "Define a new account plan" },
-      { name: "Create Fixed Deposit Plan", action: "CreateFixedDepositPlan", description: "Define a new fixed deposit plan" },
+      baseDuties.createAgent,
+      baseDuties.requestReport,
+      baseDuties.createAccountPlan,
+      baseDuties.createFixedDepositPlan,
     ],
     agent: [
-      { name: "Create Customer", action: "CreateCustomer", description: "Add a new customer to the system" },
-      { name: "Create Saving Account", action: "CreateSavingAccount", description: "Open a new savings account" },
-      { name: "Create Fixed Deposit", action: "CreateFixedDeposit", description: "Start a new fixed deposit" },
-      { name: "Initiate Transaction", action: "InitiateTransaction", description: "Process a new transaction" },
+      baseDuties.createCustomer,
+      baseDuties.createSavingAccount,
+      baseDuties.createFixedDeposit,
+      baseDuties.initiateTransaction,
     ],
   };
 
@@ -64,7 +73,7 @@ export default function Dashboard({ changePage }) {
       {user ? (
         <div className="flex my-10 items-center">
           <h2 className="text-gray-900 text-2xl/9 font-bold tracking-tight">
-            Welcome, {user.username}!
+            Welcome, {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.username}!
           </h2>
           <p className={`ml-4 text-white rounded-lg ${roleColors[user.role]} text-[8px] font-bold tracking-wide py-0.5 px-2`}>
             {user.role.toUpperCase()}

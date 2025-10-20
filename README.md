@@ -35,6 +35,7 @@ Available npm scripts (from `package.json`):
 - `npm run dev` — start Next.js in development mode
 - `npm run build` — build for production
 - `npm run start` — start the production server (after build)
+- `npm run db:apply` — apply the database schema and create initial users (prompts for passwords)
 
 Open [http://localhost:3000](http://localhost:3000) in your browser after running `npm run dev`.
 
@@ -53,6 +54,13 @@ JWT_SECRET="a-long-random-secret-for-signing-tokens"
 Notes:
 - `DATABASE_URL` should be a valid PostgreSQL connection string the `pg` package can use.
 - `JWT_SECRET` is used by server API routes for signing/verifying JSON Web Tokens. Use a long, random value in production.
+
+Optional (for email-based password reset/invite links via Resend):
+
+```properties
+RESEND_API_KEY="re_..."
+EMAIL_FROM="MIMS <no-reply@yourdomain.com>"
+```
 
 How to connect Neon (neon.tech)
 
@@ -128,7 +136,17 @@ Tips for local development
 docker run --name mims-postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=mims -p 5432:5432 -d postgres:15
 ```
 
-- After creating the DB, run the SQL schema in `app/api/setup-database/database-schema.sql` against your database (psql or a GUI tool).
+- After creating the DB, run the schema and create initial users via the interactive CLI:
+
+```bash
+# Ensure .env.local has DATABASE_URL set
+npm run db:apply
+```
+
+What this does:
+- Prompts you for admin/agent/manager passwords (hidden input)
+- Hashes them in-memory (never writes to disk)
+- Applies `src/app/api/setup-database/database-schema.sql` to your database with the placeholders replaced
 - If you modify `sample.env.local`, re-copy to `.env.local` or restart the dev server so Next.js picks up new variables.
 
 Security notes
@@ -203,3 +221,29 @@ If you need help with the repository, open an issue or reach out to the maintain
 License
 
 This project is licensed under the MIT License (see `LICENSE` in the repo).
+## Setting up initial user accounts
+
+Recommended: use the interactive CLI
+
+```bash
+# with DATABASE_URL set in .env.local
+npm run db:apply
+```
+
+The CLI prompts you for the initial passwords (admin, agent, manager), hashes them in memory, and applies the SQL schema with the hashes substituted. Nothing sensitive is written to disk.
+
+Manual alternative (optional)
+
+If you prefer to generate hashes yourself:
+
+1) Generate a bcrypt hash:
+
+```bash
+node generate-hash.js
+```
+
+2) Edit `src/app/api/setup-database/database-schema.sql` and replace `<adminhash>`, `<agenthash>`, and `<managerhash>` with your generated hashes. Then apply the SQL using psql or a GUI.
+
+Notes:
+- Do not commit real passwords or generated hashes to the repository.
+- You can re-run `npm run db:apply` against a clean database to re-seed.

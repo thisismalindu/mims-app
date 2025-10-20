@@ -25,7 +25,7 @@ export default function Register({
         setSuccessMessage(result.message || 'User created successfully');
         setShowSuccessModal(true);
         // reset minimal fields; keep created_by_userid
-        setValues((v) => ({ ...v, username: '', password: '', role: '', email: '', branchId: '' }));
+        setValues((v) => ({ ...v, username: '', firstName: '', lastName: '', role: '', email: '', branchId: '' }));
       } else if (result && !result.ok) {
         setErrorMessage(result.error || 'Registration failed');
         setShowErrorModal(true);
@@ -84,7 +84,7 @@ export default function Register({
             </div>
             <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">User Created</h3>
             <div className="mt-2 px-7 py-3">
-              <p className="text-sm text-gray-500">{successMessage}</p>
+              <p className="text-sm text-gray-500">{successMessage || 'We have emailed a password setup link to the user.'}</p>
             </div>
             <div className="items-center px-4 py-3 flex flex-col gap-2">
               <a href="/" className="block w-full">
@@ -151,35 +151,45 @@ export default function Register({
             </div>
           </div>
 
-          {/* Password */}
+          {/* First Name */}
           <div>
-            <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-sm/6 font-medium text-gray-400">
-                Password
-              </label>
-            </div>
-            <div className="mt-2 relative">
+            <label htmlFor="firstName" className="block text-sm/6 font-medium text-gray-400">
+              First Name
+            </label>
+            <div className="mt-2">
               <input
-                value={values.password}
-                onChange={(e) => setValues({ ...values, password: e.target.value })}
-                id="password"
-                name="password"
-                type={showPassword ? "text" : "password"}
+                value={values.firstName}
+                onChange={(e) => setValues({ ...values, firstName: e.target.value })}
+                id="firstName"
+                name="firstName"
+                type="text"
                 required
-                autoComplete="new-password"
+                autoComplete="given-name"
                 className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 text-xs text-blue-400 hover:text-blue-300 focus:outline-none cursor-pointer"
-                tabIndex={-1}
-                style={{ position: "absolute", right: "0.75rem", top: "50%", transform: "translateY(-50%)" }}
-              >
-                {values.password ? (showPassword ? "Hide" : "Show") : ""}
-              </button>
             </div>
           </div>
+
+          {/* Last Name */}
+          <div>
+            <label htmlFor="lastName" className="block text-sm/6 font-medium text-gray-400">
+              Last Name
+            </label>
+            <div className="mt-2">
+              <input
+                value={values.lastName}
+                onChange={(e) => setValues({ ...values, lastName: e.target.value })}
+                id="lastName"
+                name="lastName"
+                type="text"
+                required
+                autoComplete="family-name"
+                className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6"
+              />
+            </div>
+          </div>
+
+          {/* Password removed: user will receive a set-password link via email */}
 
           {/* Role */}
           <div>
