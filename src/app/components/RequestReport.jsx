@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function RequestReport({ changePage }) {
   const [reportType, setReportType] = useState("");
+  const [reportTypes, setReportTypes] = useState([]);
   const [formData, setFormData] = useState({
     agentId: "",
     startDate: "",
@@ -25,9 +26,20 @@ export default function RequestReport({ changePage }) {
     setLoading(true);
 
     // Prepare data to send
+    const params = {};
+    if (reportType === "agent_transactions") {
+      params.agentId = formData.agentId;
+      params.startDate = formData.startDate;
+      params.endDate = formData.endDate;
+    } else if (reportType === "account_summary") {
+      params.accountNumber = formData.accountNumber;
+    } else if (reportType === "customer_activity") {
+      params.customerId = formData.customerId;
+    }
+
     const dataToSend = {
-      report_type: reportType,
-      ...formData,
+      report_type_key: reportType,
+      parameters: params,
     };
 
     console.log("Report request data sent:", dataToSend);
@@ -61,6 +73,21 @@ export default function RequestReport({ changePage }) {
     }
   };
 
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/report-types');
+        if (!res.ok) throw new Error('Failed to load report types');
+  const data = await res.json();
+  if (mounted) setReportTypes(data?.types || []);
+      } catch (e) {
+        console.warn('Failed to fetch report types:', e?.message || e);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   return (
     <div className="px-6 py-12 lg:px-8">
       {/* Back button */}
@@ -90,21 +117,11 @@ export default function RequestReport({ changePage }) {
             className="rounded-md bg-white px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-500 focus:outline-2 focus:-outline-offset-2 focus:outline-blue-500 sm:text-sm/6 w-full"
           >
             <option value="">Select Report Type</option>
-            <option value="agent_transactions">
-              Agent-wise Total Number & Value of Transactions
-            </option>
-            <option value="account_summary">
-              Account-wise Transaction Summary & Current Balance
-            </option>
-            <option value="active_fds">
-              Active FDs & Next Interest Payout Dates
-            </option>
-            <option value="monthly_interest_summary">
-              Monthly Interest Distribution Summary by Account Type
-            </option>
-            <option value="customer_activity">
-              Customer Activity Report (Deposits, Withdrawals, Net Balance)
-            </option>
+            {reportTypes.map(rt => (
+              <option key={rt.key} value={rt.key}>
+                {rt.name}
+              </option>
+            ))}
           </select>
         </div>
 

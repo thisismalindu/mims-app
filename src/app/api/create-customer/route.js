@@ -29,18 +29,22 @@ export async function POST(request) {
       );
     }
     
-    console.log("****/api/create-customer/: currentUser: ", await getCurrentUser(request));
-
     const user = await getCurrentUser(request);
     const created_by_user_id = user?.userID;
+    // Resolve creator's branch
+    let branch_id = null;
+    if (created_by_user_id) {
+      const bres = await query('SELECT branch_id FROM users WHERE user_id = $1', [created_by_user_id]);
+      branch_id = bres.rows?.[0]?.branch_id ?? null;
+    }
 
 
     // Insert into the customer table
     const result = await query(
       `INSERT INTO customer 
-        (first_name, last_name, nic_number, date_of_birth, phone_number, address, email, created_by_user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING customer_id`,
+        (first_name, last_name, nic_number, date_of_birth, phone_number, address, email, created_by_user_id, branch_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING customer_id, branch_id`,
       [
         first_name,
         last_name,
@@ -50,6 +54,7 @@ export async function POST(request) {
         address,
         email || null,
         created_by_user_id || null,
+        branch_id,
       ]
     );
 

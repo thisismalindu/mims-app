@@ -30,17 +30,12 @@ CREATE TYPE transaction_type_enum AS ENUM (
   'interest'
 );
 
-CREATE TYPE report_type_enum AS ENUM (
-  'customer_summary',
-  'transaction_history',
-  'fixed_deposit_summary',
-  'audit'
-);
-
-CREATE TYPE report_status AS ENUM (
+-- Reporting: request lifecycle status
+CREATE TYPE report_request_status AS ENUM (
+  'pending',
+  'processing',
   'completed',
-  'failed',
-  'archived'
+  'failed'
 );
 
 -- ============================================================
@@ -174,19 +169,33 @@ CREATE TABLE transaction (
   )
 );
 
-CREATE TABLE report (
-  report_id BIGSERIAL PRIMARY KEY,
-  report_type report_type_enum,
+-- ============================================================
+-- REPORTING (new schema): report_type catalog and report_request storage
+-- ============================================================
+
+CREATE TABLE report_type (
+  report_type_id SERIAL PRIMARY KEY,
+  key TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT
+);
+
+CREATE TABLE report_request (
+  report_request_id BIGSERIAL PRIMARY KEY,
+  report_type_id INTEGER NOT NULL REFERENCES report_type(report_type_id) ON DELETE RESTRICT,
+  parameters JSONB NOT NULL,
   requested_by_user_id BIGINT REFERENCES users(user_id),
-  generated_by_user_id BIGINT REFERENCES users(user_id),
-  generated_time timestamptz DEFAULT now(),
-  date_range daterange,
-  description text,
-  file_path text,
-  status report_status,
+  manager_id BIGINT REFERENCES users(user_id),
+  branch_id BIGINT REFERENCES branch(branch_id),
+  status report_request_status NOT NULL DEFAULT 'pending',
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
+
+-- Helpful indexes for reporting queries
+CREATE INDEX idx_report_request_branch_status ON report_request(branch_id, status, created_at DESC);
+CREATE INDEX idx_report_request_type ON report_request(report_type_id);
+CREATE INDEX idx_report_request_params ON report_request USING GIN (parameters);
 
 CREATE TABLE audit_log (
   audit_log_id BIGSERIAL PRIMARY KEY,
@@ -289,4 +298,13 @@ VALUES ('agent', '<agenthash>', 'AgentUserPerson', 'Btrustable', 'agent', 'activ
 -- manager user
 INSERT INTO users (username, password_hash, first_name, last_name, role, status)
 VALUES ('manager', '<managerhash>', 'ManagerUserPerson', 'Btrustable', 'manager', 'active');
+
+-- Seed report types
+INSERT INTO report_type (key, name, description) VALUES
+  ('agent_transactions', 'Agent-wise Transactions', 'Total number and value of transactions for an agent in a date range'),
+  ('account_summary', 'Account Transaction Summary', 'Summary of transactions and current balance for an account'),
+  ('active_fds', 'Active Fixed Deposits', 'Active FDs and next interest payout dates'),
+  ('monthly_interest_summary', 'Monthly Interest Distribution', 'Monthly interest distribution summary by account type'),
+  ('customer_activity', 'Customer Activity', 'Customer deposits, withdrawals, and net balance over a period')
+ON CONFLICT (key) DO NOTHING;
 

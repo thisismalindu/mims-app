@@ -55,7 +55,7 @@ export default function Dashboard({ changePage }) {
       action: "CreateUser",
       description: "Add a new user to the system",
       category: "User Management",
-      allowedRoles: ["admin"],
+      allowedRoles: ["admin", "manager"],
     },
     {
       name: "Create Branch",

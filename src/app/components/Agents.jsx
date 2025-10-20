@@ -29,6 +29,7 @@ export default function Agents({ changePage }) {
         if (res.ok) {
           const data = await res.json();
           setUserRole(data?.role || null);
+          console.log('Agents.jsx /api/me result:', data);
         }
       } catch (err) {
         console.error("Error fetching user:", err);
@@ -37,16 +38,17 @@ export default function Agents({ changePage }) {
     fetchUser();
   }, []);
 
-  // Fetch branches for admin
+  // Fetch branches for admin and manager (manager sees read-only branch text)
   useEffect(() => {
     const fetchBranches = async () => {
-      if (userRole !== 'admin') return;
+      if (!['admin','manager'].includes(userRole)) return;
       
       try {
         const res = await fetch('/api/get-branches');
         if (res.ok) {
           const data = await res.json();
           setBranches(data.branches || []);
+          console.log('Agents.jsx branches loaded:', { count: (data.branches || []).length, sample: (data.branches || [])[0] });
         }
       } catch (err) {
         console.error('Error fetching branches:', err);
@@ -68,6 +70,7 @@ export default function Agents({ changePage }) {
         const data = await res.json();
         setAllAgents(data.agents || []);
         setAgents(data.agents || []);
+        console.log('Agents.jsx agents loaded:', { count: (data.agents || []).length, sample: (data.agents || [])[0] });
       } catch (err) {
         console.error("Error fetching agents:", err);
         setError(err.message);
@@ -121,6 +124,13 @@ export default function Agents({ changePage }) {
     }
 
     setAgents(filtered);
+    console.log('Agents.jsx filter applied:', {
+      selectedBranch,
+      searchType,
+      searchQuery,
+      before: allAgents.length,
+      after: filtered.length,
+    });
   }, [searchQuery, searchType, selectedBranch, allAgents, userRole]);
 
   // Check access control
@@ -147,6 +157,7 @@ export default function Agents({ changePage }) {
   const pulseClass = "animate-pulse";
 
   const patchEdit = (user_id, field, value) => {
+    console.log('Agents.jsx edit patch:', { user_id, field, value });
     setEdits((prev) => {
       const next = { ...prev };
       next[user_id] = { ...(next[user_id] || {}), [field]: value };
@@ -175,6 +186,7 @@ export default function Agents({ changePage }) {
     try {
       const res = await fetch('/api/verify-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pwModal.password }) });
       const data = await res.json().catch(() => ({}));
+      console.log('Agents.jsx verify-password response:', { ok: res.ok, data });
       if (!res.ok || data?.success === false) throw new Error(data?.error || 'Password verification failed');
       const { action, payload } = pwModal;
       setPwModal({ open: false, password: '', working: false, action: null, payload: null });
@@ -194,8 +206,10 @@ export default function Agents({ changePage }) {
     setSaving(true);
     try {
       const updates = Object.entries(edits).map(([user_id, patch]) => ({ user_id: Number(user_id), ...patch }));
+      console.log('Agents.jsx saveChanges sending updates:', updates);
       const res = await fetch('/api/update-users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates }) });
       const data = await res.json().catch(() => ({}));
+      console.log('Agents.jsx update-users response:', { ok: res.ok, data });
       if (!res.ok || data?.success === false) throw new Error(data?.error || 'Failed to save changes');
       if (Array.isArray(data.updated)) {
         setAllAgents((prev) => {
@@ -233,6 +247,7 @@ export default function Agents({ changePage }) {
         body: JSON.stringify({ user_id: user.user_id }),
       });
       const data = await res.json().catch(() => ({}));
+      console.log('Agents.jsx delete-user response:', { ok: res.ok, data, user });
       if (!res.ok || data?.success === false) throw new Error(data?.error || 'Failed to delete agent');
       setAllAgents(prev => prev.filter(x => x.user_id !== user.user_id));
       setAgents(prev => prev.filter(x => x.user_id !== user.user_id));
@@ -550,24 +565,35 @@ export default function Agents({ changePage }) {
                     </select>
                   </td>
                   <td className="p-3 align-top">
-                    <select
-                      className="border border-transparent bg-transparent px-2 py-1 rounded-md w-48 focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
-                      value={(edits[a.user_id]?.branch_id ?? a.branch_id) ?? ''}
-                      onChange={(e) => patchEdit(a.user_id, 'branch_id', e.target.value ? Number(e.target.value) : null)}
-                    >
-                      <option value="">- None -</option>
-                      {branches.map((b) => (
-                        <option key={b.branch_id} value={b.branch_id}>
-                          {b.branch_name} (#{b.branch_id})
-                        </option>
-                      ))}
-                    </select>
+                    {userRole === 'admin' ? (
+                      <select
+                        className="border border-transparent bg-transparent px-2 py-1 rounded-md w-48 focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
+                        value={(edits[a.user_id]?.branch_id ?? a.branch_id) ?? ''}
+                        onChange={(e) => patchEdit(a.user_id, 'branch_id', e.target.value ? Number(e.target.value) : null)}
+                      >
+                        <option value="">- None -</option>
+                        {branches.map((b) => (
+                          <option key={b.branch_id} value={b.branch_id}>
+                            {b.branch_name} (#{b.branch_id})
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="inline-block min-w-[8rem]">
+                        {(() => {
+                          const id = (edits[a.user_id]?.branch_id ?? a.branch_id);
+                          const b = branches.find(x => String(x.branch_id) === String(id));
+                          if (!id) return '-';
+                          return b ? `${b.branch_name} (#${b.branch_id})` : `Branch #${id}`;
+                        })()}
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 align-top">{a.customer_count}</td>
                   <td className="p-3 align-top">{a.created_at ? new Date(a.created_at).toLocaleString() : '-'}</td>
                   <td className="p-3 align-top text-right">
                     <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => setSelectedAgent(a)} className="inline-flex items-center gap-1 rounded-md bg-blue-500 hover:bg-blue-400 text-white px-2 py-1 text-xs font-semibold">View</button>
+                      <button onClick={() => { console.log('Agents.jsx view agent:', a); setSelectedAgent(a); }} className="inline-flex items-center gap-1 rounded-md bg-blue-500 hover:bg-blue-400 text-white px-2 py-1 text-xs font-semibold">View</button>
                       {userRole === 'admin' && (
                         <button onClick={() => confirmDelete(a)} className="inline-flex items-center gap-1 rounded-md bg-red-500 hover:bg-red-400 text-white px-2 py-1 text-xs font-semibold">Delete</button>
                       )}

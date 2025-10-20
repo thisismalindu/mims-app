@@ -24,6 +24,7 @@ import Agents from "./components/Agents";
 import CustomerDetails from "./components/CustomerDetails";
 import AccountDetails from "./components/AccountDetails";
 import ProcessFDInterest from "./components/ProcessFDInterest";
+import Reports from "./components/Reports";
 
 export default function Page() {
 
@@ -164,6 +165,7 @@ export default function Page() {
         ...commonStart,
         { name: "Agents", icon: <UserIcon /> },
         { name: "Customers", icon: <UsersIcon /> },
+        { name: "Reports", icon: <ChartBarIcon /> },
         ...commonEnd,
       ];
     }
@@ -264,6 +266,8 @@ export default function Page() {
         return <CreateFixedDepositPlan changePage={changePage} />;
       case "ProcessFDInterest":
         return <ProcessFDInterest changePage={changePage} />;
+      case "Reports":
+        return <Reports changePage={changePage} />;
       default:
         return (
           <div className="bg-white rounded-lg p-6 shadow text-gray-700">
