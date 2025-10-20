@@ -10,9 +10,9 @@ export async function GET(request) {
       return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 });
     }
 
-    // Fetch all branches
+    // Fetch all branches (include phone_number)
     const { rows } = await query(
-      `SELECT branch_id, branch_name, address 
+      `SELECT branch_id, branch_name, phone_number, address 
        FROM branch 
        ORDER BY branch_id ASC`
     );

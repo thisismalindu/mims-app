@@ -1,14 +1,14 @@
 // page.js
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {UserIcon, HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTextIcon, ArrowRightStartOnRectangleIcon, ChartBarIcon } from '@heroicons/react/24/outline'
 
 import Dashboard from "./components/Dashboard";
 import Customers from "./components/Customers";
+import Accounts from "./components/Accounts";
 import Transactions from "./components/Transactions";
 import SettingsPage from "./components/SettingsPage";
-import ChangePassword from "./components/ChangePassword";
 import CreateCustomer from "./components/CreateCustomer";
 import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
@@ -21,11 +21,13 @@ import RequestReport from "./components/RequestReport";
 import Profile from "./components/Profile";
 import CreateBranch from "./components/CreateBranch";
 import Agents from "./components/Agents";
+import Branches from "./components/Branches";
 import CustomerDetails from "./components/CustomerDetails";
 import AccountDetails from "./components/AccountDetails";
 import Accounts from "./components/Accounts";
 import ProcessFDInterest from "./components/ProcessFDInterest";
 import Reports from "./components/Reports";
+import InterestDistributions from "./components/InterestDistributions";
 
 export default function Page() {
 
@@ -33,9 +35,6 @@ export default function Page() {
   const [user, setUser] = useState(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [selectedAccount, setSelectedAccount] = useState(null);
-  const [sessionInfo, setSessionInfo] = useState(null);
-  const refreshTimerRef = useRef(null);
-  const [showRefreshPrompt, setShowRefreshPrompt] = useState(false);
   
   useEffect(() => {
     const syncPageWithUrl = () => {
@@ -155,12 +154,13 @@ export default function Page() {
     ];
 
     if (user.role === 'admin') {
-      // Admin: Dashboard, Users, Agents, Customers, Branches, Settings, Profile
+      // Admin: Dashboard, Users, Agents, Settings, Profile
+      // Admin: Dashboard, Customers, Users, Branches, Settings, Profile
       return [
         ...commonStart,
+        { name: "Customers", icon: <UsersIcon /> },
         { name: "Users", icon: <UsersIcon /> },
         { name: "Agents", icon: <UserIcon /> },
-        { name: "Customers", icon: <UsersIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
         { name: "Branches", icon: <BanknotesIcon /> },
         { name: "Reports", icon: <ChartBarIcon /> },
@@ -170,10 +170,10 @@ export default function Page() {
     if (user.role === 'manager') { 
       return [
         ...commonStart,
-        { name: "Agents", icon: <UserIcon /> },
         { name: "Customers", icon: <UsersIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
         { name: "Reports", icon: <ChartBarIcon /> },
+        { name: "Agents", icon: <UserIcon /> },
         ...commonEnd,
       ];
     }
@@ -330,19 +330,6 @@ export default function Page() {
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto">
         {renderPage()}
-        {/* Session refresh prompt */}
-        {showRefreshPrompt && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-lg shadow-lg p-5 w-full max-w-sm">
-              <h3 className="text-base font-semibold mb-2">Session expiring soon</h3>
-              <p className="text-sm text-gray-600 mb-4">Your session will expire shortly. Refresh your session to stay signed in.</p>
-              <div className="flex justify-end gap-2">
-                <button onClick={() => { setShowRefreshPrompt(false); window.location.replace('/login'); }} className="px-3 py-1.5 rounded border text-sm">Logout</button>
-                <button onClick={handleTokenRefresh} className="px-3 py-1.5 rounded text-sm text-white bg-blue-600 hover:bg-blue-500">Refresh Session</button>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );
