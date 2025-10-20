@@ -5,6 +5,53 @@ export default function Customers({ changePage, onSelectCustomer }) {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [branches, setBranches] = useState([]);
+  const [edits, setEdits] = useState({}); // { [customer_id]: { field: value } }
+  const [saving, setSaving] = useState(false);
+  const [toasts, setToasts] = useState([]);
+  const [pwModal, setPwModal] = useState({ open: false, password: '', working: false, action: null, payload: null });
+  
+  // Filter states
+  const [searchType, setSearchType] = useState("name");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBranch, setSelectedBranch] = useState("");
+
+  const hasChanges = useMemo(() => Object.keys(edits).length > 0, [edits]);
+
+  // Fetch current user
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('/api/me');
+        if (res.ok) {
+          const userData = await res.json();
+          setCurrentUser(userData);
+        }
+      } catch (err) {
+        console.error('Error fetching current user:', err);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
+
+  // Fetch branches 
+  useEffect(() => {
+    const fetchBranches = async () => {
+      // if (currentUser?.role !== 'admin') return;
+      
+      try {
+        const res = await fetch('/api/get-branches');
+        if (res.ok) {
+          const data = await res.json();
+          setBranches(data.branches || []);
+        }
+      } catch (err) {
+        console.error('Error fetching branches:', err);
+      }
+    };
+    fetchBranches();
+  }, [currentUser]);
 
   useEffect(() => {
     const fetchCustomers = async () => {

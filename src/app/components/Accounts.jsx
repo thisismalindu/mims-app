@@ -1,20 +1,18 @@
 "use client";
 import React, { useEffect, useState } from "react";
 
-export default function Accounts({ customerId, onSelectSavingsAccount, onSelectFixedDeposit, changePage }) {
+export default function Accounts({ changePage }) {
   const [savingsAccounts, setSavingsAccounts] = useState([]);
   const [fixedDeposits, setFixedDeposits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!customerId) return;
-
     const fetchAccounts = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/get-customer-accounts?customerId=${customerId}`);
-        if (!res.ok) throw new Error("Failed to load customer accounts");
+        const res = await fetch(`/api/get-accounts`);
+        if (!res.ok) throw new Error("Failed to load accounts");
         const data = await res.json();
         setSavingsAccounts(data.savingsAccounts || []);
         setFixedDeposits(data.fixedDeposits || []);
@@ -27,7 +25,7 @@ export default function Accounts({ customerId, onSelectSavingsAccount, onSelectF
     };
 
     fetchAccounts();
-  }, [customerId]);
+  }, []);
 
   if (loading) {
     return (
@@ -51,7 +49,7 @@ export default function Accounts({ customerId, onSelectSavingsAccount, onSelectF
       </a>
 
       <h2 className="mt-6 text-2xl font-bold tracking-tight text-gray-900">
-        Customer Accounts
+        Accounts
       </h2>
 
       {/* Savings Accounts */}
@@ -62,11 +60,12 @@ export default function Accounts({ customerId, onSelectSavingsAccount, onSelectF
             {savingsAccounts.map((acc) => (
               <button
                 key={acc.savings_account_id}
-                onClick={() => onSelectSavingsAccount(acc.savings_account_id)}
+                onClick={() => changePage('AccountDetails', { accountType: 'savings', accountId: acc.savings_account_id })}
                 className="px-4 py-3 bg-blue-500 text-white rounded-md font-semibold text-left hover:bg-blue-400 transition flex justify-between items-center"
               >
                 <span>
                   {acc.account_number} — {acc.plan_name}
+                  {acc.holders ? ` — ${acc.holders}` : ''}
                 </span>
                 <span className="text-sm italic opacity-80">View ➜</span>
               </button>
@@ -85,11 +84,12 @@ export default function Accounts({ customerId, onSelectSavingsAccount, onSelectF
             {fixedDeposits.map((fd) => (
               <button
                 key={fd.fixed_deposit_account_id}
-                onClick={() => onSelectFixedDeposit(fd.fixed_deposit_account_id)}
+                onClick={() => changePage('AccountDetails', { accountType: 'fd', accountId: fd.fixed_deposit_account_id })}
                 className="px-4 py-3 bg-green-600 text-white rounded-md font-semibold text-left hover:bg-green-500 transition flex justify-between items-center"
               >
                 <span>
                   FD#{fd.fixed_deposit_account_id} — {fd.plan_name}
+                  {fd.holders ? ` — ${fd.holders}` : ''}
                 </span>
                 <span className="text-sm italic opacity-80">View ➜</span>
               </button>

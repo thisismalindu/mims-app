@@ -16,28 +16,82 @@ export async function GET(request) {
     let params = [];
 
     if (currentUser.role === 'admin') {
-      sql = `SELECT customer_id, first_name, last_name, nic_number, phone_number, email, status
-             FROM customer
-             ORDER BY first_name ASC, last_name ASC
+      sql = `SELECT 
+               c.customer_id, 
+               c.first_name, 
+               c.last_name, 
+               c.nic_number, 
+               c.phone_number, 
+               c.email, 
+               c.status,
+               c.created_by_user_id,
+               u.first_name as agent_first_name,
+               u.last_name as agent_last_name,
+               /* Prefer explicit customer.branch_id (set on creation) and fallback to any linked account branch */
+               COALESCE(c.branch_id, MIN(sa.branch_id)) as branch_id,
+               ARRAY_AGG(DISTINCT LPAD(sa.branch_id::text, 3, '0') || LPAD(sa.savings_account_id::text, 7, '0')) 
+                 FILTER (WHERE sa.savings_account_id IS NOT NULL) as account_numbers
+             FROM customer c
+             LEFT JOIN users u ON c.created_by_user_id = u.user_id
+             LEFT JOIN customer_account ca ON c.customer_id = ca.customer_id
+             LEFT JOIN savings_account sa ON ca.savings_account_id = sa.savings_account_id
+             GROUP BY c.customer_id, c.first_name, c.last_name, c.nic_number, 
+                      c.phone_number, c.email, c.status, c.created_by_user_id,
+                      u.first_name, u.last_name, c.branch_id
+             ORDER BY c.customer_id ASC
              LIMIT 500`;
     } else if (currentUser.role === 'manager') {
       // Manager sees customers created by agents who belong to them
       const userId = currentUser.userID || currentUser.user_id;
-      sql = `SELECT customer_id, first_name, last_name, nic_number, phone_number, email, status
-             FROM customer
-             WHERE created_by_user_id IN (
+      sql = `SELECT 
+               c.customer_id, 
+               c.first_name, 
+               c.last_name, 
+               c.nic_number, 
+               c.phone_number, 
+               c.email, 
+               c.status,
+               c.created_by_user_id,
+               u.first_name as agent_first_name,
+               u.last_name as agent_last_name,
+               COALESCE(c.branch_id, MIN(sa.branch_id)) as branch_id,
+               ARRAY_AGG(DISTINCT LPAD(sa.branch_id::text, 3, '0') || LPAD(sa.savings_account_id::text, 7, '0')) 
+                 FILTER (WHERE sa.savings_account_id IS NOT NULL) as account_numbers
+             FROM customer c
+             LEFT JOIN users u ON c.created_by_user_id = u.user_id
+             LEFT JOIN customer_account ca ON c.customer_id = ca.customer_id
+             LEFT JOIN savings_account sa ON ca.savings_account_id = sa.savings_account_id
+             WHERE c.created_by_user_id IN (
                SELECT user_id FROM users WHERE created_by_user_id = $1 AND role = 'agent'
              )
-             ORDER BY first_name ASC, last_name ASC
+             GROUP BY c.customer_id, c.first_name, c.last_name, c.nic_number, 
+                      c.phone_number, c.email, c.status, c.created_by_user_id,
+                      u.first_name, u.last_name, c.branch_id
+             ORDER BY c.customer_id ASC
              LIMIT 500`;
       params = [userId];
     } else {
       // Agent sees only their own customers
       const userId = currentUser.userID || currentUser.user_id;
-      sql = `SELECT customer_id, first_name, last_name, nic_number, phone_number, email, status
-             FROM customer
-             WHERE created_by_user_id = $1
-             ORDER BY first_name ASC, last_name ASC
+      sql = `SELECT 
+               c.customer_id, 
+               c.first_name, 
+               c.last_name, 
+               c.nic_number, 
+               c.phone_number, 
+               c.email, 
+               c.status,
+               c.created_by_user_id,
+               COALESCE(c.branch_id, MIN(sa.branch_id)) as branch_id,
+               ARRAY_AGG(DISTINCT LPAD(sa.branch_id::text, 3, '0') || LPAD(sa.savings_account_id::text, 7, '0')) 
+                 FILTER (WHERE sa.savings_account_id IS NOT NULL) as account_numbers
+             FROM customer c
+             LEFT JOIN customer_account ca ON c.customer_id = ca.customer_id
+             LEFT JOIN savings_account sa ON ca.savings_account_id = sa.savings_account_id
+             WHERE c.created_by_user_id = $1
+             GROUP BY c.customer_id, c.first_name, c.last_name, c.nic_number, 
+                      c.phone_number, c.email, c.status, c.created_by_user_id, c.branch_id
+             ORDER BY c.customer_id ASC
              LIMIT 500`;
       params = [userId];
     }

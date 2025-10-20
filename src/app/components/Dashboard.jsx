@@ -50,20 +50,98 @@ export default function Dashboard({ changePage }) {
     createBranch: { name: "Create Branch", action: "CreateBranch", description: "Add a new branch to the system" },
   };
 
-  const roleDuties = {
-    admin: Object.values(baseDuties),
-    manager: [
-      baseDuties.createAgent,
-      baseDuties.requestReport,
-      baseDuties.createAccountPlan,
-      baseDuties.createFixedDepositPlan,
-    ],
-    agent: [
-      baseDuties.createCustomer,
-      baseDuties.createSavingAccount,
-      baseDuties.createFixedDeposit,
-      baseDuties.initiateTransaction,
-    ],
+  // Single source of truth for all features/duties
+  const duties = [
+    {
+      name: "Create User",
+      action: "CreateUser",
+      description: "Add a new user to the system",
+      category: "User Management",
+      allowedRoles: ["admin", "manager"],
+    },
+    {
+      name: "Create Branch",
+      action: "CreateBranch",
+      description: "Add a new branch to the system",
+      category: "Administration",
+      allowedRoles: ["admin"],
+    },
+    {
+      name: "Request Report",
+      action: "RequestReport",
+      description: "Request a system report",
+      category: "Reporting",
+      allowedRoles: ["admin", "manager"],
+    },
+    {
+      name: "Create Account Plan",
+      action: "CreateAccountPlan",
+      description: "Define a new account plan",
+      category: "Plans",
+      allowedRoles: ["admin", "manager"],
+    },
+    {
+      name: "Create Fixed Deposit Plan",
+      action: "CreateFixedDepositPlan",
+      description: "Define a new fixed deposit plan",
+      category: "Plans",
+      allowedRoles: ["admin", "manager"],
+    },
+    {
+      name: "Process FD Interest",
+      action: "ProcessFDInterest",
+      description: "Calculate and credit FD interest payments",
+      category: "Operations",
+      allowedRoles: ["admin", "manager"],
+    },
+    {
+      name: "Create Customer",
+      action: "CreateCustomer",
+      description: "Add a new customer to the system",
+      category: "Customer",
+      allowedRoles: ["admin", "manager", "agent"],
+    },
+    {
+      name: "Create Saving Account",
+      action: "CreateSavingAccount",
+      description: "Open a new savings account",
+      category: "Accounts",
+      allowedRoles: ["admin", "manager", "agent"],
+    },
+    {
+      name: "Create Fixed Deposit",
+      action: "CreateFixedDeposit",
+      description: "Start a new fixed deposit",
+      category: "Accounts",
+      allowedRoles: ["admin", "manager", "agent"],
+    },
+    {
+      name: "Initiate Transaction",
+      action: "InitiateTransaction",
+      description: "Process a new transaction",
+      category: "Operations",
+      allowedRoles: ["admin", "manager", "agent"],
+    },
+  ];
+
+  // decide which duties to show for a given role
+  const dutiesForUser = useMemo(() => {
+    if (!user) return [];
+    if (user.role === "admin") return duties;
+    return duties.filter((d) => d.allowedRoles.includes(user.role));
+  }, [user]);
+
+  // derive grouping categories from visible duties
+  const categories = useMemo(() => {
+    const set = new Set(dutiesForUser.map((d) => d.category));
+    return Array.from(set);
+  }, [dutiesForUser]);
+
+  // infer accent role for card coloring
+  const inferAccentRole = (duty) => {
+    if (duty.allowedRoles.includes("agent")) return "agent";
+    if (duty.allowedRoles.includes("manager")) return "manager";
+    return "admin";
   };
 
 

@@ -24,7 +24,9 @@ import Agents from "./components/Agents";
 import Branches from "./components/Branches";
 import CustomerDetails from "./components/CustomerDetails";
 import AccountDetails from "./components/AccountDetails";
+import Accounts from "./components/Accounts";
 import ProcessFDInterest from "./components/ProcessFDInterest";
+import Reports from "./components/Reports";
 import InterestDistributions from "./components/InterestDistributions";
 
 export default function Page() {
@@ -68,11 +70,70 @@ export default function Page() {
     fetchUser();
   }, []);
 
-  const changePage = (page) => {
-    setActivePage(page)
-    const params = new URLSearchParams(window.location.search)
-    params.set("page", page)
-    window.history.pushState({}, "", "?" + params.toString())
+  // Session watchdog: poll once and schedule timers based on token exp
+  useEffect(() => {
+    let pollAbort = false;
+
+    const fetchSession = async () => {
+      try {
+        const res = await fetch('/api/session', { cache: 'no-store' });
+        if (!res.ok) throw new Error('unauthorized');
+        const data = await res.json();
+        if (pollAbort) return;
+        setSessionInfo(data);
+
+        const secs = Number(data.secondsRemaining || 0);
+        // Prompt at 5 minutes remaining if still within session
+        const promptMs = Math.max((secs - 5 * 60), 0) * 1000;
+        const logoutMs = Math.max(secs, 0) * 1000;
+
+        // Clear previous
+        if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
+
+        // Schedule prompt
+        refreshTimerRef.current = setTimeout(() => {
+          setShowRefreshPrompt(true);
+        }, promptMs);
+
+        // Schedule hard logout on expiry as a backup in case user ignores prompt
+        const logoutTimer = setTimeout(() => {
+          window.location.replace('/login');
+        }, logoutMs + 1000); // 1s grace
+
+        return () => clearTimeout(logoutTimer);
+      } catch (_) {
+        // If token already invalid, force logout immediately
+        window.location.replace('/login');
+      }
+    };
+
+    fetchSession();
+    return () => { pollAbort = true; };
+  }, []);
+
+  const handleTokenRefresh = async () => {
+    try {
+      const res = await fetch('/api/refresh-token', { method: 'POST' });
+      if (!res.ok) throw new Error('refresh failed');
+      setShowRefreshPrompt(false);
+      // Re-poll session to reschedule timers
+      const s = await fetch('/api/session', { cache: 'no-store' });
+      const data = await s.json();
+      setSessionInfo(data);
+    } catch (_) {
+      window.location.replace('/login');
+    }
+  };
+
+  const changePage = (page, extraParams = {}) => {
+    setActivePage(page);
+    // Build a fresh query to avoid leaking prior page params
+    const params = new URLSearchParams();
+    params.set("page", page);
+    for (const [k, v] of Object.entries(extraParams || {})) {
+      if (v !== undefined && v !== null && v !== "") params.set(k, String(v));
+    }
+    window.history.pushState({}, "", "?" + params.toString());
   }
 
   // Build menu dynamically based on user role
@@ -100,7 +161,9 @@ export default function Page() {
         { name: "Customers", icon: <UsersIcon /> },
         { name: "Users", icon: <UsersIcon /> },
         { name: "Agents", icon: <UserIcon /> },
+        { name: "Accounts", icon: <BanknotesIcon /> },
         { name: "Branches", icon: <BanknotesIcon /> },
+        { name: "Reports", icon: <ChartBarIcon /> },
         ...commonEnd,
       ];
     }
@@ -108,8 +171,9 @@ export default function Page() {
       return [
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
-        { name: "Agents", icon: <UserIcon /> },
         { name: "Accounts", icon: <BanknotesIcon /> },
+        { name: "Reports", icon: <ChartBarIcon /> },
+        { name: "Agents", icon: <UserIcon /> },
         ...commonEnd,
       ];
     }
@@ -149,80 +213,80 @@ export default function Page() {
     window.location.replace("/login");
   };
 
-  const renderPage = () => {
-    switch (activePage) {
-      case "Dashboard":
-        return <Dashboard changePage={changePage} />;
-      case "Customers":
-        return <Customers changePage={changePage}/>;
-      case "Agents":
-        return <Agents changePage={changePage} />;
-        return <Customers changePage={changePage} onSelectCustomer={(customerId) => {
+  // Lightweight routes registry to reduce switch-case redundancy
+  const routes = {
+    Dashboard: () => <Dashboard changePage={changePage} />,
+    Customers: () => (
+      <Customers
+        changePage={changePage}
+        onSelectCustomer={(customerId) => {
           setSelectedCustomerId(customerId);
-          changePage("CustomerDetails");
-        }} />;
-      case "CustomerDetails":
-        return <CustomerDetails 
-          customerId={selectedCustomerId} 
+          changePage("CustomerDetails", { customerId });
+        }}
+      />
+    ),
+    Agents: () => <Agents changePage={changePage} />,
+    CustomerDetails: () => (
+      <CustomerDetails
+        customerId={selectedCustomerId}
+        changePage={changePage}
+        onSelectAccount={(accountType, accountId) => {
+          setSelectedAccount({ accountType, accountId });
+          // Preserve current customerId via URL
+          const params = new URLSearchParams(window.location.search);
+          const customerId = params.get('customerId') || selectedCustomerId;
+          changePage("AccountDetails", { accountType, accountId, customerId });
+        }}
+        onBack={() => changePage("Customers")}
+      />
+    ),
+    AccountDetails: () => (
+      <AccountDetails
+        accountType={selectedAccount?.accountType}
+        accountId={selectedAccount?.accountId}
+        changePage={changePage}
+        onBack={() => changePage("Accounts")}
+      />
+    ),
+    Accounts: () => {
+      const params = new URLSearchParams(window.location.search);
+      const cid = Number(params.get('customerId')) || selectedCustomerId || null;
+      return (
+        <Accounts
           changePage={changePage}
-          onSelectAccount={(accountType, accountId) => {
-            setSelectedAccount({ accountType, accountId });
-            changePage("AccountDetails");
-          }}
-          onBack={() => changePage("Customers")}
-        />;
-      case "AccountDetails":
-        return <AccountDetails 
-          accountType={selectedAccount?.accountType}
-          accountId={selectedAccount?.accountId}
-          changePage={changePage}
-          onBack={() => changePage("CustomerDetails")}
-        />;
-      case "Accounts":
-        return <Accounts />;
-      case "Transactions":
-        return <Transactions />;
-      case "Settings":
-        return <SettingsPage />;
-      case "CreateCustomer":
-        return <CreateCustomer changePage={changePage} />;
-      case "InitiateTransaction":
-        return <InitiateTransaction changePage={changePage} />;
-      case "CreateSavingAccount":
-        return <CreateSavingAccount changePage={changePage} />;
-      case "RequestReport":
-        return <RequestReport changePage={changePage} />;
-      case "Users":
-        return <Users changePage={changePage} />;
-      case "CreateFixedDeposit":
-        return <CreateFixedDeposit changePage={changePage} />;
-      case "Profile":
-        return <Profile />;
-      case "CreateBranch":
-        return <CreateBranch changePage={changePage} />;
-      case "Branches":
-        return <Branches changePage={changePage} />;
-      case "CreateAgent":
-        window.location.replace("/register");
-        return null;
-      case "CreateUser":
-        window.location.replace("/register");
-        return null;
-      case "CreateAccountPlan":
-        return <CreateAccountPlan changePage={changePage} />;
-      case "CreateFixedDepositPlan":
-        return <CreateFixedDepositPlan changePage={changePage} />;
-      case "ProcessFDInterest":
-        return <ProcessFDInterest changePage={changePage} />;
-      case "InterestDistributions":
-        return <InterestDistributions changePage={changePage} />;
-      default:
-        return (
-          <div className="bg-white rounded-lg p-6 shadow text-gray-700">
-            Page Not Found
-          </div>
-        );
-    }
+          customerId={cid}
+          onSelectSavingsAccount={(accountId) => changePage('AccountDetails', { accountType: 'savings', accountId, customerId: cid })}
+          onSelectFixedDeposit={(accountId) => changePage('AccountDetails', { accountType: 'fd', accountId, customerId: cid })}
+        />
+      );
+    },
+    Transactions: () => <Transactions />,
+    Settings: () => <SettingsPage changePage={changePage} />,
+    ChangePassword: () => <ChangePassword onBack={() => changePage('Settings')} />,
+    CreateCustomer: () => <CreateCustomer changePage={changePage} />,
+    InitiateTransaction: () => <InitiateTransaction changePage={changePage} />,
+    CreateSavingAccount: () => <CreateSavingAccount changePage={changePage} />,
+    RequestReport: () => <RequestReport changePage={changePage} />,
+    Users: () => <Users changePage={changePage} />,
+    CreateFixedDeposit: () => <CreateFixedDeposit changePage={changePage} />,
+    Profile: () => <Profile />,
+    CreateBranch: () => <CreateBranch changePage={changePage} />,
+    CreateAgent: () => { window.location.replace('/register'); return null; },
+    CreateUser: () => { window.location.replace('/register'); return null; },
+    CreateAccountPlan: () => <CreateAccountPlan changePage={changePage} />,
+    CreateFixedDepositPlan: () => <CreateFixedDepositPlan changePage={changePage} />,
+    ProcessFDInterest: () => <ProcessFDInterest changePage={changePage} />,
+    Reports: () => <Reports changePage={changePage} />,
+  };
+
+  const renderPage = () => {
+    const render = routes[activePage];
+    if (render) return render();
+    return (
+      <div className="bg-white rounded-lg p-6 shadow text-gray-700">
+        Page Not Found
+      </div>
+    );
   };
 
   // Main content
