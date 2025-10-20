@@ -8,6 +8,7 @@ import Dashboard from "./components/Dashboard";
 import Customers from "./components/Customers";
 import Transactions from "./components/Transactions";
 import SettingsPage from "./components/SettingsPage";
+import ChangePassword from "./components/ChangePassword";
 import CreateCustomer from "./components/CreateCustomer";
 import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
@@ -174,7 +175,9 @@ export default function Page() {
       case "Transactions":
         return <Transactions />;
       case "Settings":
-        return <SettingsPage />;
+        return <SettingsPage changePage={changePage} />;
+      case "ChangePassword":
+        return <ChangePassword onBack={() => changePage('Settings')} />;
       case "CreateCustomer":
         return <CreateCustomer changePage={changePage} />;
       case "InitiateTransaction":
