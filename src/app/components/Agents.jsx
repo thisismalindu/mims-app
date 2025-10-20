@@ -1,12 +1,25 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 export default function Agents({ changePage }) {
   const [agents, setAgents] = useState([]);
+  const [allAgents, setAllAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [branches, setBranches] = useState([]);
+  const [edits, setEdits] = useState({}); // { [user_id]: { field: value } }
+  const [saving, setSaving] = useState(false);
+  const [toasts, setToasts] = useState([]);
+  const [pwModal, setPwModal] = useState({ open: false, password: '', working: false, action: null, payload: null });
+
+  // Filter states
+  const [searchType, setSearchType] = useState("name");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBranch, setSelectedBranch] = useState("");
+
+  const hasChanges = useMemo(() => Object.keys(edits).length > 0, [edits]);
 
   // Fetch current user role
   useEffect(() => {
@@ -25,17 +38,17 @@ export default function Agents({ changePage }) {
     fetchUser();
   }, []);
 
-  // Fetch branches for admin and manager (manager sees read-only branch text)
+
+  // Fetch branches for admin
   useEffect(() => {
     const fetchBranches = async () => {
-      if (!['admin','manager'].includes(userRole)) return;
-      
+      if (userRole !== 'admin') return;
+
       try {
         const res = await fetch('/api/get-branches');
         if (res.ok) {
           const data = await res.json();
           setBranches(data.branches || []);
-          console.log('Agents.jsx branches loaded:', { count: (data.branches || []).length, sample: (data.branches || [])[0] });
         }
       } catch (err) {
         console.error('Error fetching branches:', err);
@@ -55,6 +68,7 @@ export default function Agents({ changePage }) {
           throw new Error(data.error || "Failed to fetch agents");
         }
         const data = await res.json();
+        setAllAgents(data.agents || []);
         setAgents(data.agents || []);
         console.log('Agents.jsx agents loaded:', { count: (data.agents || []).length, sample: (data.agents || [])[0] });
       } catch (err) {
@@ -68,7 +82,7 @@ export default function Agents({ changePage }) {
     fetchAgents();
   }, []);
 
-  // Filter agents based on search and branch
+  // Filter agents based on search and branch (Consolidated)
   useEffect(() => {
     let filtered = allAgents;
 
@@ -83,24 +97,24 @@ export default function Agents({ changePage }) {
 
       switch (searchType) {
         case "name":
-          filtered = filtered.filter(a => 
+          filtered = filtered.filter(a =>
             `${a.first_name} ${a.last_name}`.toLowerCase().includes(query)
           );
           break;
         case "agent_id":
-          filtered = filtered.filter(a => 
+          filtered = filtered.filter(a =>
             a.user_id.toString().includes(query)
           );
           break;
         case "customer_id":
           // Filter agents who created a customer with this ID
-          filtered = filtered.filter(a => 
+          filtered = filtered.filter(a =>
             a.customer_ids?.some(id => id.toString().includes(query))
           );
           break;
         case "customer_name":
           // Filter agents who created a customer with this name
-          filtered = filtered.filter(a => 
+          filtered = filtered.filter(a =>
             a.customer_names?.some(name => name.toLowerCase().includes(query))
           );
           break;
@@ -110,14 +124,8 @@ export default function Agents({ changePage }) {
     }
 
     setAgents(filtered);
-    console.log('Agents.jsx filter applied:', {
-      selectedBranch,
-      searchType,
-      searchQuery,
-      before: allAgents.length,
-      after: filtered.length,
-    });
   }, [searchQuery, searchType, selectedBranch, allAgents, userRole]);
+
 
   // Check access control
   if (userRole && !["admin", "manager"].includes(userRole)) {
@@ -143,7 +151,6 @@ export default function Agents({ changePage }) {
   const pulseClass = "animate-pulse";
 
   const patchEdit = (user_id, field, value) => {
-    console.log('Agents.jsx edit patch:', { user_id, field, value });
     setEdits((prev) => {
       const next = { ...prev };
       next[user_id] = { ...(next[user_id] || {}), [field]: value };
@@ -172,7 +179,6 @@ export default function Agents({ changePage }) {
     try {
       const res = await fetch('/api/verify-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pwModal.password }) });
       const data = await res.json().catch(() => ({}));
-      console.log('Agents.jsx verify-password response:', { ok: res.ok, data });
       if (!res.ok || data?.success === false) throw new Error(data?.error || 'Password verification failed');
       const { action, payload } = pwModal;
       setPwModal({ open: false, password: '', working: false, action: null, payload: null });
@@ -192,10 +198,8 @@ export default function Agents({ changePage }) {
     setSaving(true);
     try {
       const updates = Object.entries(edits).map(([user_id, patch]) => ({ user_id: Number(user_id), ...patch }));
-      console.log('Agents.jsx saveChanges sending updates:', updates);
       const res = await fetch('/api/update-users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updates }) });
       const data = await res.json().catch(() => ({}));
-      console.log('Agents.jsx update-users response:', { ok: res.ok, data });
       if (!res.ok || data?.success === false) throw new Error(data?.error || 'Failed to save changes');
       if (Array.isArray(data.updated)) {
         setAllAgents((prev) => {
@@ -233,7 +237,6 @@ export default function Agents({ changePage }) {
         body: JSON.stringify({ user_id: user.user_id }),
       });
       const data = await res.json().catch(() => ({}));
-      console.log('Agents.jsx delete-user response:', { ok: res.ok, data, user });
       if (!res.ok || data?.success === false) throw new Error(data?.error || 'Failed to delete agent');
       setAllAgents(prev => prev.filter(x => x.user_id !== user.user_id));
       setAgents(prev => prev.filter(x => x.user_id !== user.user_id));
@@ -246,7 +249,65 @@ export default function Agents({ changePage }) {
 
   if (loading) {
     return (
-      <div className="p-6 text-gray-600 italic">Loading agents...</div>
+      <div className="px-6 py-8">
+        {/* back link placeholder */}
+        <div className={`h-4 w-16 bg-gray-200 rounded ${pulseClass}`} />
+
+        {/* Single card skeleton to mirror final UI */}
+        <div className="bg-white rounded-xl p-6 shadow mt-6">
+          {/* Header: title + save button */}
+          <div className="flex items-center justify-between mb-4">
+            <div className={`h-7 w-48 bg-gray-200 rounded ${pulseClass}`} />
+            <div className={`h-8 w-28 bg-gray-200 rounded ${pulseClass}`} />
+          </div>
+
+          {/* One-line filters */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-shrink-0">
+              <div className={`h-4 w-28 bg-gray-200 rounded mb-2 ${pulseClass}`} />
+              <div className={`h-9 w-64 bg-gray-200 rounded ${pulseClass}`} />
+            </div>
+            <div className="flex-shrink-0">
+              <div className={`h-4 w-20 bg-gray-200 rounded mb-2 ${pulseClass}`} />
+              <div className={`h-9 w-48 bg-gray-200 rounded ${pulseClass}`} />
+            </div>
+            <div className="flex-grow">
+              <div className={`h-4 w-14 bg-gray-200 rounded mb-2 ${pulseClass}`} />
+              <div className={`h-9 w-full bg-gray-200 rounded ${pulseClass}`} />
+            </div>
+            <div className="hidden md:flex items-end">
+              <div className={`h-9 w-20 bg-gray-200 rounded ${pulseClass}`} />
+            </div>
+          </div>
+
+          {/* Count line */}
+          <div className="mt-2">
+            <div className={`h-4 w-72 bg-gray-200 rounded ${pulseClass}`} />
+          </div>
+
+          {/* Table skeleton */}
+          <div className="overflow-x-auto mt-4">
+            <div className="w-full border border-gray-200 rounded-lg">
+              <div className="bg-gray-50 p-3">
+                <div className="grid grid-cols-9 gap-3">
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div key={i} className={`h-4 bg-gray-200 rounded ${pulseClass}`} />
+                  ))}
+                </div>
+              </div>
+              <div className="divide-y divide-gray-200">
+                {Array.from({ length: 6 }).map((_, r) => (
+                  <div key={r} className="grid grid-cols-9 gap-3 p-3">
+                    {Array.from({ length: 9 }).map((_, c) => (
+                      <div key={c} className={`h-4 bg-gray-200 rounded ${pulseClass}`} />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -348,7 +409,7 @@ export default function Agents({ changePage }) {
     );
   }
 
-  // List view
+  // List view (editable table)
   return (
     <div className="px-6 py-8">
       <a
@@ -358,23 +419,69 @@ export default function Agents({ changePage }) {
         ⬅ back
       </a>
 
-      <h2 className="mt-6 text-2xl font-bold tracking-tight text-gray-900">
-        {userRole === 'admin' ? 'All Agents' : 'Your Agents'}
-      </h2>
+      <div className="bg-white rounded-xl p-6 shadow text-gray-800 mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">{userRole === 'admin' ? 'All Agents' : 'Your Agents'}</h2>
+          <div className="flex items-center gap-2">
+            {hasChanges && (
+              <button onClick={confirmSave} disabled={saving} className={`rounded-md px-3 py-1.5 text-sm font-semibold text-white ${saving ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-500'}`}>
+                {saving ? 'Saving…' : 'Save Changes'}
+              </button>
+            )}
+          </div>
+        </div>
 
-      {agents.length > 0 ? (
-        <div className="flex flex-col gap-3 mt-6">
-          {agents.map((agent) => (
-            <button
-              key={agent.user_id}
-              onClick={() => setSelectedAgent(agent)}
-              className="px-4 py-3 bg-blue-500 text-white rounded-md font-semibold text-left hover:bg-blue-400 transition flex justify-between items-center"
-            >
-              <div className="flex flex-col">
-                <span>{agent.first_name} {agent.last_name}</span>
-                <span className="text-xs opacity-80">
-                  User ID: {agent.user_id} • Customers: {agent.customer_count}
-                </span>
+        {/* Filters */}
+        <div className="mt-3 bg-white">
+          <div className="flex flex-col md:flex-row gap-4">
+            {userRole === 'admin' && (
+              <div className="flex-shrink-0">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Branch:</label>
+                <select
+                  value={selectedBranch}
+                  onChange={(e) => setSelectedBranch(e.target.value)}
+                  className="block w-full md:w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+                >
+                  <option value="">All Branches</option>
+                  {branches.map((branch) => (
+                    <option key={branch.branch_id} value={branch.branch_id}>
+                      {branch.branch_name} ({String(branch.branch_id).padStart(3, '0')})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="flex-shrink-0">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search By:</label>
+              <select
+                value={searchType}
+                onChange={(e) => { setSearchType(e.target.value); setSearchQuery(''); }}
+                className="block w-full md:w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+              >
+                <option value="name">Agent Name</option>
+                <option value="agent_id">Agent ID</option>
+                <option value="customer_id">Customer ID</option>
+                <option value="customer_name">Customer Name</option>
+              </select>
+            </div>
+            <div className="flex-grow">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Search:</label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={
+                  searchType === 'name' ? 'Enter agent name...' :
+                    searchType === 'agent_id' ? 'Enter agent ID...' :
+                      searchType === 'customer_id' ? 'Enter customer ID...' :
+                        'Enter customer name...'
+                }
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+              />
+            </div>
+            {searchQuery && (
+              <div className="flex items-end">
+                <button onClick={() => setSearchQuery('')} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition font-medium">Clear</button>
               </div>
             )}
           </div>
@@ -385,69 +492,68 @@ export default function Agents({ changePage }) {
         {agents.length > 0 ? (
           <div className="overflow-x-auto mt-4">
             <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-gray-50 text-left text-sm font-medium text-gray-700">
-                <th className="p-3">ID</th>
-                <th className="p-3">Name</th>
-                <th className="p-3">Username</th>
-                <th className="p-3">Email</th>
-                <th className="p-3">Status</th>
-                <th className="p-3">Branch</th>
-                <th className="p-3">Customers</th>
+              <thead>
+                <tr className="bg-gray-50 text-left text-sm font-medium text-gray-700">
+                  <th className="p-3">ID</th>
+                  <th className="p-3">Name</th>
+                  <th className="p-3">Username</th>
+                  <th className="p-3">Email</th>
+                  <th className="p-3">Status</th>
+                  <th className="p-3">Branch</th>
+                  <th className="p-3">Customers</th>
                   <th className="p-3">Created</th>
                   <th className="p-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {agents.map((a) => (
-                <tr key={a.user_id} className="hover:bg-gray-50 text-sm border-b border-b-gray-200 last:border-0">
-                  <td className="p-3 align-top">{a.user_id}</td>
-                  <td className="p-3 align-top">
-                    <div className="flex gap-2">
+                </tr>
+              </thead>
+              <tbody>
+                {agents.map((a) => (
+                  <tr key={a.user_id} className="hover:bg-gray-50 text-sm border-b border-b-gray-200 last:border-0">
+                    <td className="p-3 align-top">{a.user_id}</td>
+                    <td className="p-3 align-top">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          className="w-28 border border-transparent bg-transparent px-2 py-1 rounded-md cursor-text focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
+                          value={(edits[a.user_id]?.first_name ?? a.first_name) || ''}
+                          placeholder="First"
+                          onChange={(e) => patchEdit(a.user_id, 'first_name', e.target.value)}
+                        />
+                        <input
+                          type="text"
+                          className="w-28 border border-transparent bg-transparent px-2 py-1 rounded-md cursor-text focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
+                          value={(edits[a.user_id]?.last_name ?? a.last_name) || ''}
+                          placeholder="Last"
+                          onChange={(e) => patchEdit(a.user_id, 'last_name', e.target.value)}
+                        />
+                      </div>
+                    </td>
+                    <td className="p-3 align-top">
                       <input
                         type="text"
-                        className="w-28 border border-transparent bg-transparent px-2 py-1 rounded-md cursor-text focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
-                        value={(edits[a.user_id]?.first_name ?? a.first_name) || ''}
-                        placeholder="First"
-                        onChange={(e) => patchEdit(a.user_id, 'first_name', e.target.value)}
+                        className="w-40 border border-transparent bg-transparent px-2 py-1 rounded-md cursor-text focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
+                        value={(edits[a.user_id]?.username ?? a.username) || ''}
+                        onChange={(e) => patchEdit(a.user_id, 'username', e.target.value)}
                       />
+                    </td>
+                    <td className="p-3 align-top">
                       <input
-                        type="text"
-                        className="w-28 border border-transparent bg-transparent px-2 py-1 rounded-md cursor-text focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
-                        value={(edits[a.user_id]?.last_name ?? a.last_name) || ''}
-                        placeholder="Last"
-                        onChange={(e) => patchEdit(a.user_id, 'last_name', e.target.value)}
+                        type="email"
+                        className="w-56 border border-transparent bg-transparent px-2 py-1 rounded-md cursor-text focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
+                        value={(edits[a.user_id]?.email ?? a.email) || ''}
+                        onChange={(e) => patchEdit(a.user_id, 'email', e.target.value)}
                       />
-                    </div>
-                  </td>
-                  <td className="p-3 align-top">
-                    <input
-                      type="text"
-                      className="w-40 border border-transparent bg-transparent px-2 py-1 rounded-md cursor-text focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
-                      value={(edits[a.user_id]?.username ?? a.username) || ''}
-                      onChange={(e) => patchEdit(a.user_id, 'username', e.target.value)}
-                    />
-                  </td>
-                  <td className="p-3 align-top">
-                    <input
-                      type="email"
-                      className="w-56 border border-transparent bg-transparent px-2 py-1 rounded-md cursor-text focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
-                      value={(edits[a.user_id]?.email ?? a.email) || ''}
-                      onChange={(e) => patchEdit(a.user_id, 'email', e.target.value)}
-                    />
-                  </td>
-                  <td className="p-3 align-top">
-                    <select
-                      className="border border-transparent bg-transparent px-2 py-1 rounded-md capitalize focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
-                      value={(edits[a.user_id]?.status ?? a.status)}
-                      onChange={(e) => patchEdit(a.user_id, 'status', e.target.value)}
-                    >
-                      <option value="active">active</option>
-                      <option value="inactive">inactive</option>
-                    </select>
-                  </td>
-                  <td className="p-3 align-top">
-                    {userRole === 'admin' ? (
+                    </td>
+                    <td className="p-3 align-top">
+                      <select
+                        className="border border-transparent bg-transparent px-2 py-1 rounded-md capitalize focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
+                        value={(edits[a.user_id]?.status ?? a.status)}
+                        onChange={(e) => patchEdit(a.user_id, 'status', e.target.value)}
+                      >
+                        <option value="active">active</option>
+                        <option value="inactive">inactive</option>
+                      </select>
+                    </td>
+                    <td className="p-3 align-top">
                       <select
                         className="border border-transparent bg-transparent px-2 py-1 rounded-md w-48 focus:border-gray-300 focus:bg-white focus:shadow-sm outline-none transition-colors duration-150"
                         value={(edits[a.user_id]?.branch_id ?? a.branch_id) ?? ''}
@@ -460,30 +566,20 @@ export default function Agents({ changePage }) {
                           </option>
                         ))}
                       </select>
-                    ) : (
-                      <span className="inline-block min-w-[8rem]">
-                        {(() => {
-                          const id = (edits[a.user_id]?.branch_id ?? a.branch_id);
-                          const b = branches.find(x => String(x.branch_id) === String(id));
-                          if (!id) return '-';
-                          return b ? `${b.branch_name} (#${b.branch_id})` : `Branch #${id}`;
-                        })()}
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3 align-top">{a.customer_count}</td>
-                  <td className="p-3 align-top">{a.created_at ? new Date(a.created_at).toLocaleString() : '-'}</td>
-                  <td className="p-3 align-top text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => { console.log('Agents.jsx view agent:', a); setSelectedAgent(a); }} className="inline-flex items-center gap-1 rounded-md bg-blue-500 hover:bg-blue-400 text-white px-2 py-1 text-xs font-semibold">View</button>
-                      {userRole === 'admin' && (
-                        <button onClick={() => confirmDelete(a)} className="inline-flex items-center gap-1 rounded-md bg-red-500 hover:bg-red-400 text-white px-2 py-1 text-xs font-semibold">Delete</button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+                    </td>
+                    <td className="p-3 align-top">{a.customer_count}</td>
+                    <td className="p-3 align-top">{a.created_at ? new Date(a.created_at).toLocaleString() : '-'}</td>
+                    <td className="p-3 align-top text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => setSelectedAgent(a)} className="inline-flex items-center gap-1 rounded-md bg-blue-500 hover:bg-blue-400 text-white px-2 py-1 text-xs font-semibold">View</button>
+                        {userRole === 'admin' && (
+                          <button onClick={() => confirmDelete(a)} className="inline-flex items-center gap-1 rounded-md bg-red-500 hover:bg-red-400 text-white px-2 py-1 text-xs font-semibold">Delete</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         ) : (
@@ -500,42 +596,38 @@ export default function Agents({ changePage }) {
       </div>
 
       {/* Password confirmation modal */}
-      {pwModal.open && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-lg p-5 w-full max-w-sm">
-            <h3 className="text-base font-semibold mb-3">Confirm action</h3>
-            <p className="text-sm text-gray-600 mb-3">Please enter your password to continue.</p>
-            <input
-              type="password"
-              value={pwModal.password}
-              onChange={(e) => setPwModal(s => ({ ...s, password: e.target.value }))}
-              className="w-full border rounded px-3 py-2 mb-4"
-              placeholder="Password"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setPwModal({ open: false, password: '', working: false, action: null, payload: null })}
-                className="px-3 py-1.5 rounded border text-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePasswordConfirm}
-                disabled={pwModal.working || !pwModal.password}
-                className={`px-3 py-1.5 rounded text-sm text-white ${pwModal.working ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-500'}`}
-              >
-                {pwModal.working ? 'Verifying…' : 'Confirm'}
-              </button>
+      {pwModal.open &&
+        (
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-lg shadow-lg p-5 w-full max-w-sm">
+              <h3 className="text-base font-semibold mb-3">Confirm action</h3>
+              <p className="text-sm text-gray-600 mb-3">Please enter your password to continue.</p>
+              <input
+                type="password"
+                value={pwModal.password}
+                onChange={(e) => setPwModal(s => ({ ...s, password: e.target.value }))}
+                className="w-full border rounded px-3 py-2 mb-4"
+                placeholder="Password"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setPwModal({ open: false, password: '', working: false, action: null, payload: null })}
+                  className="px-3 py-1.5 rounded border text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePasswordConfirm}
+                  disabled={pwModal.working || !pwModal.password}
+                  className={`px-3 py-1.5 rounded text-sm text-white ${pwModal.working ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-500'}`}
+                >
+                  {pwModal.working ? 'Verifying…' : 'Confirm'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <p className="text-gray-500 italic mt-4">
-          {userRole === 'admin' 
-            ? 'No agents found in the system.' 
-            : "You haven't created any agents yet."}
-        </p>
-      )}
+        )
+      }
     </div>
   );
 }
