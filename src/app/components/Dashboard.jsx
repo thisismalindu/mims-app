@@ -26,13 +26,28 @@ export default function Dashboard({ changePage }) {
 
 
 
-  // role colors
+  // role helpers
   const roleColors = {
     admin: "bg-red-400",
     manager: "bg-green-500",
     agent: "bg-blue-400",
     default: "bg-gray-400",
   };
+
+  const normalizeRole = (r) => {
+    if (!r || typeof r !== "string") return "default";
+    const val = r.trim().toLowerCase();
+    return ["admin", "manager", "agent"].includes(val) ? val : "default";
+  };
+
+  const getRoleColor = (r) => roleColors[normalizeRole(r)] || roleColors.default;
+
+  const formatRoleLabel = (r) => {
+    const n = normalizeRole(r);
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  };
+
+  const userRole = useMemo(() => normalizeRole(user?.role), [user?.role]);
 
   // Single source of truth for all features/duties
   const duties = [
@@ -111,9 +126,9 @@ export default function Dashboard({ changePage }) {
   // decide which duties to show for a given role
   const dutiesForUser = useMemo(() => {
     if (!user) return [];
-    if (user.role === "admin") return duties;
-    return duties.filter((d) => d.allowedRoles.includes(user.role));
-  }, [user]);
+    if (userRole === "admin") return duties;
+    return duties.filter((d) => d.allowedRoles.includes(userRole));
+  }, [user, userRole]);
 
   // derive grouping categories from visible duties
   const categories = useMemo(() => {
@@ -179,14 +194,20 @@ export default function Dashboard({ changePage }) {
             !
           </h2>
           <p className="ml-4">
-            <RoleBadge role={user.role || "default"} />
+            <span
+              className={`inline-flex items-center gap-2 text-xs font-medium px-2 py-1 rounded-full border border-gray-200 bg-white text-gray-700`}
+              title={`Role: ${formatRoleLabel(userRole)}`}
+            >
+              <span className={`h-2 w-2 rounded-full ${getRoleColor(userRole)}`} />
+              {formatRoleLabel(userRole)}
+            </span>
           </p>
         </div>
       ) : (
         <p className="text-gray-500">Failed to load user.</p>
       )}
 
-      {user && user.role === "admin" && (
+      {user && userRole === "admin" && (
         <div className="flex gap-4 items-center text-xs text-gray-500 mb-4">
           {["agent", "manager", "admin"].map((r) => (
             <span key={r} className="inline-flex items-center gap-1">
@@ -222,7 +243,13 @@ export default function Dashboard({ changePage }) {
                           <h4 className="text-base font-semibold">
                             {duty.name}
                           </h4>
-                          <RoleBadge role={accentRole} />
+                          <span
+                            className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border border-gray-200 bg-white text-gray-700"
+                            title={`Access: ${formatRoleLabel(accentRole)}`}
+                          >
+                            <span className={`h-2 w-2 rounded-full ${getRoleColor(accentRole)}`} />
+                            {formatRoleLabel(accentRole)}
+                          </span>
                         </div>
                         <p className="text-sm opacity-80">
                           {duty.description}

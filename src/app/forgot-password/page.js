@@ -21,8 +21,12 @@ export default function ForgotPasswordPage() {
   if (!res.ok || data?.success === false) throw new Error(data?.error || 'Failed to request code');
   setMaskedEmail(data?.maskedEmail || "");
   setStep(2);
+  const emailQueued = !!data?.emailQueued;
   const target = data?.maskedEmail ? ` to ${data.maskedEmail}` : '';
-  setMessage({ type: 'success', text: `Your verification code has been sent${target}. Please check your inbox.` });
+  const text = emailQueued
+    ? `We sent a password reset link${target}. Please check your inbox and follow the link to set a new password.`
+    : `We couldn't email a reset link for this account. If you expected an email, make sure your username is correct or contact an administrator.`;
+  setMessage({ type: emailQueued ? 'success' : 'error', text });
     } catch (e) {
       setMessage({ type: 'error', text: e.message || 'Failed to request code' });
     } finally { setWorking(false); }
@@ -58,8 +62,11 @@ export default function ForgotPasswordPage() {
 
         {step === 2 && (
           <div className="space-y-6">
+            {/* Body message now shown above through message banner; we keep a neutral fallback */}
             <p className="text-sm text-gray-500">
-              We sent a password reset link{maskedEmail ? ` to ${maskedEmail}` : ''}. Please check your inbox and follow the link to set a new password.
+              {maskedEmail
+                ? `If you received the email, follow the link sent to ${maskedEmail}.`
+                : `If you expected an email but didn't receive one, verify your username or contact an administrator.`}
             </p>
             <div className="flex items-center justify-between">
               <button type="button" onClick={() => setStep(1)} className="text-sm font-semibold text-blue-400 hover:text-blue-300 cursor-pointer">Use a different username</button>

@@ -138,62 +138,100 @@ export default function Page() {
     window.history.pushState({}, "", "?" + params.toString());
   }
 
-  // Build menu dynamically based on user role
-  const menuItems = (() => {
-    // Default minimal menu before user loads
+  // Role helpers for robust checks
+  const normalizeRole = (r) => {
+    if (!r || typeof r !== 'string') return 'default';
+    const v = r.trim().toLowerCase();
+    return ['admin','manager','agent'].includes(v) ? v : 'default';
+  };
+  const userRole = React.useMemo(() => normalizeRole(user?.role), [user?.role]);
+  const canView = (allowed) => {
+    if (userRole === 'admin') return true; // admin sees all
+    return Array.isArray(allowed) ? allowed.includes(userRole) : false;
+  };
+
+  // Unified pages registry: one source of truth for menu + render
+  const pages = React.useMemo(() => {
+    return [
+      // Menu pages
+      { key: 'Dashboard', name: 'Dashboard', icon: <HomeIcon />, inMenu: true, allowed: ['admin','manager','agent'], render: () => (<Dashboard changePage={changePage} />) },
+      { key: 'Users', name: 'Users', icon: <UsersIcon />, inMenu: true, allowed: ['admin'], render: () => (<Users changePage={changePage} />) },
+      { key: 'Agents', name: 'Agents', icon: <UserIcon />, inMenu: true, allowed: ['admin','manager'], render: () => (<Agents changePage={changePage} />) },
+      { key: 'Accounts', name: 'Accounts', icon: <BanknotesIcon />, inMenu: true, allowed: ['admin','manager', 'agent'], render: () => {
+        const params = new URLSearchParams(window.location.search);
+        const cid = Number(params.get('customerId')) || selectedCustomerId || null;
+        return (
+          <Accounts
+            changePage={changePage}
+            customerId={cid}
+            onSelectSavingsAccount={(accountId) => changePage('AccountDetails', { accountType: 'savings', accountId, customerId: cid })}
+            onSelectFixedDeposit={(accountId) => changePage('AccountDetails', { accountType: 'fd', accountId, customerId: cid })}
+          />
+        );
+      } },
+      { key: 'Customers', name: 'Customers', icon: <UsersIcon />, inMenu: true, allowed: ['admin','manager','agent'], render: () => (
+        <Customers
+          changePage={changePage}
+          onSelectCustomer={(customerId) => {
+            setSelectedCustomerId(customerId);
+            changePage('CustomerDetails', { customerId });
+          }}
+        />
+      ) },
+      { key: 'Branches', name: 'Branches', icon: <BanknotesIcon />, inMenu: true, allowed: ['admin'], render: () => (<Branches changePage={changePage} />) },
+      { key: 'Reports', name: 'Reports', icon: <ChartBarIcon />, inMenu: true, allowed: ['admin','manager'], render: () => (<Reports changePage={changePage} />) },
+      { key: 'Transactions', name: 'Transactions', icon: <DocumentTextIcon />, inMenu: true, allowed: ['admin','manager','agent'], render: () => (<Transactions />) },
+      { key: 'Settings', name: 'Settings', icon: <Cog6ToothIcon />, inMenu: true, allowed: ['admin','manager','agent'], render: () => (<SettingsPage changePage={changePage} />) },
+      { key: 'Profile', name: 'Profile', icon: <UserIcon />, inMenu: true, allowed: ['admin','manager','agent'], render: () => (<Profile />) },
+
+      // Non-menu pages (navigated programmatically)
+      { key: 'CustomerDetails', name: 'Customer Details', inMenu: false, allowed: ['admin','manager','agent'], render: () => (
+        <CustomerDetails
+          customerId={selectedCustomerId}
+          changePage={changePage}
+          onSelectAccount={(accountType, accountId) => {
+            setSelectedAccount({ accountType, accountId });
+            const params = new URLSearchParams(window.location.search);
+            const customerId = params.get('customerId') || selectedCustomerId;
+            changePage('AccountDetails', { accountType, accountId, customerId });
+          }}
+          onBack={() => changePage('Customers')}
+        />
+      ) },
+      { key: 'AccountDetails', name: 'Account Details', inMenu: false, allowed: ['admin','manager','agent'], render: () => (
+        <AccountDetails
+          accountType={selectedAccount?.accountType}
+          accountId={selectedAccount?.accountId}
+          changePage={changePage}
+          onBack={() => changePage('Accounts')}
+        />
+      ) },
+      { key: 'CreateCustomer', name: 'Create Customer', inMenu: false, allowed: ['admin','manager','agent'], render: () => (<CreateCustomer changePage={changePage} />) },
+      { key: 'InitiateTransaction', name: 'Initiate Transaction', inMenu: false, allowed: ['admin','manager','agent'], render: () => (<InitiateTransaction changePage={changePage} />) },
+      { key: 'CreateSavingAccount', name: 'Create Saving Account', inMenu: false, allowed: ['admin','manager','agent'], render: () => (<CreateSavingAccount changePage={changePage} />) },
+      { key: 'CreateFixedDeposit', name: 'Create Fixed Deposit', inMenu: false, allowed: ['admin','manager','agent'], render: () => (<CreateFixedDeposit changePage={changePage} />) },
+      { key: 'CreateAccountPlan', name: 'Create Account Plan', inMenu: false, allowed: ['admin','manager'], render: () => (<CreateAccountPlan changePage={changePage} />) },
+      { key: 'CreateFixedDepositPlan', name: 'Create Fixed Deposit Plan', inMenu: false, allowed: ['admin','manager'], render: () => (<CreateFixedDepositPlan changePage={changePage} />) },
+      { key: 'ProcessFDInterest', name: 'Process FD Interest', inMenu: false, allowed: ['admin','manager'], render: () => (<ProcessFDInterest changePage={changePage} />) },
+      { key: 'RequestReport', name: 'Request Report', inMenu: false, allowed: ['admin','manager'], render: () => (<RequestReport changePage={changePage} />) },
+      { key: 'ChangePassword', name: 'Change Password', inMenu: false, allowed: ['admin','manager','agent'], render: () => (<ChangePassword onBack={() => changePage('Settings')} />) },
+      { key: 'CreateBranch', name: 'Create Branch', inMenu: false, allowed: ['admin'], render: () => (<CreateBranch changePage={changePage} />) },
+      { key: 'CreateAgent', name: 'Create Agent', inMenu: false, allowed: ['admin','manager'], render: () => { window.location.replace('/register'); return null; } },
+      { key: 'CreateUser', name: 'Create User', inMenu: false, allowed: ['admin','manager'], render: () => { window.location.replace('/register'); return null; } },
+    ];
+  }, [selectedCustomerId, selectedAccount, userRole]);
+
+  // Menu items filtered by role; before user loads show minimal subset
+  const menuItems = React.useMemo(() => {
     if (!user) {
       return [
-        { name: "Dashboard", icon: <HomeIcon /> },
-        { name: "Settings", icon: <Cog6ToothIcon /> },
-        { name: "Profile", icon: <UserIcon /> },
+        { key: 'Dashboard', name: 'Dashboard', icon: <HomeIcon /> },
+        { key: 'Settings', name: 'Settings', icon: <Cog6ToothIcon /> },
+        { key: 'Profile', name: 'Profile', icon: <UserIcon /> },
       ];
     }
-
-    const commonStart = [ { name: "Dashboard", icon: <HomeIcon /> } ];
-    const commonEnd = [
-      { name: "Settings", icon: <Cog6ToothIcon /> },
-      { name: "Profile", icon: <UserIcon /> },
-    ];
-
-    if (user.role === 'admin') {
-      // Admin: Dashboard, Users, Agents, Customers, Branches, Settings, Profile
-      return [
-        ...commonStart,
-        { name: "Users", icon: <UsersIcon /> },
-        { name: "Agents", icon: <UserIcon /> },
-        { name: "Accounts", icon: <BanknotesIcon /> },
-        { name: "Customers", icon: <UsersIcon /> },
-        { name: "Branches", icon: <BanknotesIcon /> },
-        { name: "Reports", icon: <ChartBarIcon /> },
-        ...commonEnd,
-      ];
-    }
-    if (user.role === 'manager') { 
-      return [
-        ...commonStart,
-        { name: "Customers", icon: <UsersIcon /> },
-        { name: "Accounts", icon: <BanknotesIcon /> },
-        { name: "Reports", icon: <ChartBarIcon /> },
-        { name: "Agents", icon: <UserIcon /> },
-        ...commonEnd,
-      ];
-    }
-
-    if (user.role === 'agent') {
-      return [
-        ...commonStart,
-        { name: "Customers", icon: <UsersIcon /> },
-        { name: "Transactions", icon: <DocumentTextIcon /> },
-        ...commonEnd,
-      ];
-    }
-    
-    // Fallback
-    return [
-      ...commonStart,
-      ...commonEnd,
-    ];
-  })();
+    return pages.filter(p => p.inMenu && canView(p.allowed)).map(p => ({ key: p.key, name: p.name, icon: p.icon }));
+  }, [user, pages]);
 
   const handleLogout = async () => {
     try {
@@ -213,75 +251,16 @@ export default function Page() {
     window.location.replace("/login");
   };
 
-  // Lightweight routes registry to reduce switch-case redundancy
-  const routes = {
-    Dashboard: () => <Dashboard changePage={changePage} />,
-    Customers: () => (
-      <Customers
-        changePage={changePage}
-        onSelectCustomer={(customerId) => {
-          setSelectedCustomerId(customerId);
-          changePage("CustomerDetails", { customerId });
-        }}
-      />
-    ),
-    Agents: () => <Agents changePage={changePage} />,
-    CustomerDetails: () => (
-      <CustomerDetails
-        customerId={selectedCustomerId}
-        changePage={changePage}
-        onSelectAccount={(accountType, accountId) => {
-          setSelectedAccount({ accountType, accountId });
-          // Preserve current customerId via URL
-          const params = new URLSearchParams(window.location.search);
-          const customerId = params.get('customerId') || selectedCustomerId;
-          changePage("AccountDetails", { accountType, accountId, customerId });
-        }}
-        onBack={() => changePage("Customers")}
-      />
-    ),
-    AccountDetails: () => (
-      <AccountDetails
-        accountType={selectedAccount?.accountType}
-        accountId={selectedAccount?.accountId}
-        changePage={changePage}
-        onBack={() => changePage("Accounts")}
-      />
-    ),
-    Accounts: () => {
-      const params = new URLSearchParams(window.location.search);
-      const cid = Number(params.get('customerId')) || selectedCustomerId || null;
-      return (
-        <Accounts
-          changePage={changePage}
-          customerId={cid}
-          onSelectSavingsAccount={(accountId) => changePage('AccountDetails', { accountType: 'savings', accountId, customerId: cid })}
-          onSelectFixedDeposit={(accountId) => changePage('AccountDetails', { accountType: 'fd', accountId, customerId: cid })}
-        />
-      );
-    },
-    Transactions: () => <Transactions />,
-    Settings: () => <SettingsPage changePage={changePage} />,
-    ChangePassword: () => <ChangePassword onBack={() => changePage('Settings')} />,
-    CreateCustomer: () => <CreateCustomer changePage={changePage} />,
-    InitiateTransaction: () => <InitiateTransaction changePage={changePage} />,
-    CreateSavingAccount: () => <CreateSavingAccount changePage={changePage} />,
-    RequestReport: () => <RequestReport changePage={changePage} />,
-    Users: () => <Users changePage={changePage} />,
-    CreateFixedDeposit: () => <CreateFixedDeposit changePage={changePage} />,
-    Profile: () => <Profile />,
-    CreateBranch: () => <CreateBranch changePage={changePage} />,
-    CreateAgent: () => { window.location.replace('/register'); return null; },
-    CreateUser: () => { window.location.replace('/register'); return null; },
-    CreateAccountPlan: () => <CreateAccountPlan changePage={changePage} />,
-    CreateFixedDepositPlan: () => <CreateFixedDepositPlan changePage={changePage} />,
-    ProcessFDInterest: () => <ProcessFDInterest changePage={changePage} />,
-    Reports: () => <Reports changePage={changePage} />,
-  };
-
+  // Renderer uses the unified pages registry
   const renderPage = () => {
-    const render = routes[activePage];
-    if (render) return render();
+    const item = pages.find(p => p.key === activePage);
+    if (item) {
+      if (!user) {
+        if (['Dashboard','Settings','Profile'].includes(item.key)) return item.render();
+      } else if (canView(item.allowed)) {
+        return item.render();
+      }
+    }
     return (
       <div className="bg-white rounded-lg p-6 shadow text-gray-700">
         Page Not Found
@@ -304,9 +283,9 @@ export default function Page() {
           {menuItems.map((item) => (
             <button
               key={item.name}
-              onClick={() => changePage(item.name)}
+              onClick={() => changePage(item.key)}
               className={`flex items-center gap-3 px-4 py-4 transition-colors text-sm font-medium border-b border-gray-800
-                ${activePage === item.name
+                ${activePage === item.key
                   ? "bg-blue-500 text-white"
                   : "text-gray-300 hover:bg-gray-700 hover:text-white"
                 }`}
@@ -329,7 +308,7 @@ export default function Page() {
 
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto">
-        {renderPage()}
+  {renderPage()}
         {/* Session refresh prompt */}
         {showRefreshPrompt && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">

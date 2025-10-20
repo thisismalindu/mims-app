@@ -4,6 +4,8 @@ import { query } from '@/lib/database'
 import { randomUUID } from 'crypto'
 import { sendSetPasswordEmail } from '../_email'
 
+export const runtime = 'nodejs'
+
 async function ensureSessionTable() {
   await query(`
     CREATE TABLE IF NOT EXISTS password_reset_sessions (
@@ -67,17 +69,19 @@ export async function POST(request) {
     const link = `${origin}/set-password?token=${encodeURIComponent(resetToken)}`
 
     // Email link (best-effort)
-    try {
-      if (user.email) {
+    let emailQueued = false
+    if (user.email) {
+      try {
         console.log('Sending set-password email to', user.email)
-        await sendSetPasswordEmail({ to: user.email, link, appName: 'MIMS' })
+        const res = await sendSetPasswordEmail({ to: user.email, link, appName: 'MIMS' })
+        emailQueued = !!res?.ok
+      } catch (err) {
+        console.warn('Failed to send set-password email:', err?.message || err)
       }
-    } catch (err) {
-      console.warn('Failed to send set-password email:', err?.message || err)
     }
 
-    const maskedEmail = maskEmail(user.email)
-    return NextResponse.json({ success: true, maskedEmail })
+    const maskedEmail = emailQueued ? maskEmail(user.email) : undefined
+    return NextResponse.json({ success: true, emailQueued, maskedEmail })
   } catch (e) {
     console.error('request-otp error:', e)
     return NextResponse.json({ error: 'Unexpected error' }, { status: 500 })

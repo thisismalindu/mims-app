@@ -15,7 +15,10 @@ export const runtime = 'nodejs'
 
 export async function sendSetPasswordEmail({ to, link, appName = 'MIMS' }) {
   const resend = getResend()
-  if (!resend) return
+  if (!resend) {
+    console.warn('[email] RESEND_API_KEY is not set; skipping email send')
+    return { ok: false, reason: 'no-api-key' }
+  }
   const from = process.env.EMAIL_FROM || 'onboarding@resend.dev'
   console.log("Sending from", from)
   const subject = `${appName} account setup`
@@ -32,6 +35,10 @@ export async function sendSetPasswordEmail({ to, link, appName = 'MIMS' }) {
     </div>
   `
   const { error } = await resend.emails.send({ from, to, subject, html })
-  if (error) throw new Error(error.message || 'Failed to send set-password email')
-    console.log('Set-password email sent to', to)
+  if (error) {
+    console.warn('[email] Failed to send set-password email:', error?.message || error)
+    return { ok: false, reason: 'send-failed', error }
+  }
+  console.log('Set-password email sent to', to)
+  return { ok: true }
 }

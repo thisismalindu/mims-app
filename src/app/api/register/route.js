@@ -6,6 +6,8 @@ import { getCurrentUser } from '../utils/get-user';
 import { randomUUID } from 'crypto';
 import { sendSetPasswordEmail } from '../forgot-password/_email';
 
+export const runtime = 'nodejs';
+
 export async function POST(request) {
   try {
     const authUser = await getCurrentUser(request);
@@ -76,15 +78,17 @@ export async function POST(request) {
     const link = `${origin}/set-password?token=${encodeURIComponent(resetToken)}`;
 
     // Try sending email; don't fail creation if email fails
+    let emailQueued = false;
     if (email) {
       try {
-        await sendSetPasswordEmail({ to: email, link, appName: 'MIMS' });
+        const res = await sendSetPasswordEmail({ to: email, link, appName: 'MIMS' });
+        emailQueued = !!res?.ok;
       } catch (e) {
         console.warn('Failed to send set-password email:', e?.message || e);
       }
     }
 
-    return NextResponse.json({ message: 'User created. A password setup link has been emailed to the user.', user });
+    return NextResponse.json({ message: 'User created. A password setup link has been emailed to the user.', user, emailQueued });
   } catch (err) {
     if (err?.code === '23505') {
       return NextResponse.json({ error: 'Username or email already exists' }, { status: 409 });
