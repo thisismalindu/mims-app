@@ -65,7 +65,7 @@ CREATE TABLE users (
   last_name text NOT NULL,
   role user_type NOT NULL,
   status status_enum NOT NULL DEFAULT 'active',
-  email text UNIQUE,
+  email text,
   created_by_user_id BIGINT REFERENCES users(user_id),
   branch_id BIGINT REFERENCES branch(branch_id),
   created_at timestamptz DEFAULT now(),
@@ -84,6 +84,7 @@ CREATE TABLE login_log (
 
 CREATE TABLE customer (
   customer_id BIGSERIAL PRIMARY KEY,
+  branch_id BIGSERIAL REFERENCES branch(branch_id),
   first_name text,
   last_name text,
   nic_number text UNIQUE,
@@ -277,6 +278,15 @@ BEGIN
   END LOOP;
 END$$;
 
--- root user
+-- admin user
 INSERT INTO users (username, password_hash, first_name, last_name, role, status)
-VALUES ('root', '$2b$10$LG206ujTzZxeIdIQdEbmluSMNsq0d5RrJNtfxPg8Nvz04u6xWmE36', 'Root', 'Administrator', 'admin', 'active');
+VALUES ('admin', '<adminhash>', 'AdminUserPerson', 'Btrustable', 'admin', 'active');
+
+-- agent user
+INSERT INTO users (username, password_hash, first_name, last_name, role, status)
+VALUES ('agent', '<agenthash>', 'AgentUserPerson', 'Btrustable', 'agent', 'active');
+
+-- manager user
+INSERT INTO users (username, password_hash, first_name, last_name, role, status)
+VALUES ('manager', '<managerhash>', 'ManagerUserPerson', 'Btrustable', 'manager', 'active');
+

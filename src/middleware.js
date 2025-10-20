@@ -10,7 +10,15 @@ export function middleware(request) {
   const searchParams = request.nextUrl.searchParams;
 
   console.log('pathname: ', pathname);
-
+  if (pathname.startsWith('/api/calc-savings-interest')) {
+    console.log('✅ Bypassing auth for /api/calc-savings-interest');
+    return NextResponse.next();
+  }
+  // Allow forgot-password API to be called without auth
+  if (pathname.startsWith('/api/forgot-password')) {
+    console.log('✅ Bypassing auth for /api/forgot-password');
+    return NextResponse.next();
+  }
   // === Case 1: Login page ===
   if (pathname.startsWith('/login')) {
     if (token) {
@@ -27,6 +35,16 @@ export function middleware(request) {
         });
     }
     console.log('No token, proceeding to /login');
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith('/forgot-password')) {
+    console.log('Bypassing auth for /forgot-password');
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith('/set-password')) {
+    console.log('Bypassing auth for /set-password');
     return NextResponse.next();
   }
 
@@ -70,5 +88,6 @@ async function verifyToken(token) {
 export const config = {
   matcher: [
     '/((?!api/login|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api/calc-savings-interest|api/login|api/forgot-password|set-password|_next/static|_next/image|favicon.ico).*)',
   ],
 };
