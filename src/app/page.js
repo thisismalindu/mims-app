@@ -90,13 +90,12 @@ export default function Page() {
     ];
 
     if (user.role === 'admin') {
-      // Admin: Dashboard, Users, Agents, Settings, Profile
-      // Admin: Dashboard, Customers, Users, Branches, Settings, Profile
+      // Admin: Dashboard, Users, Agents, Customers, Branches, Settings, Profile
       return [
         ...commonStart,
-        { name: "Customers", icon: <UsersIcon /> },
         { name: "Users", icon: <UsersIcon /> },
         { name: "Agents", icon: <UserIcon /> },
+        { name: "Customers", icon: <UsersIcon /> },
         { name: "Branches", icon: <BanknotesIcon /> },
         ...commonEnd,
       ];
@@ -104,9 +103,8 @@ export default function Page() {
     if (user.role === 'manager') { 
       return [
         ...commonStart,
-        { name: "Customers", icon: <UsersIcon /> },
         { name: "Agents", icon: <UserIcon /> },
-        { name: "Accounts", icon: <BanknotesIcon /> },
+        { name: "Customers", icon: <UsersIcon /> },
         ...commonEnd,
       ];
     }
