@@ -43,6 +43,11 @@ export function middleware(request) {
     return NextResponse.next();
   }
 
+  if (pathname.startsWith('/set-password')) {
+    console.log('Bypassing auth for /set-password');
+    return NextResponse.next();
+  }
+
   // === Case 2: All other routes ===
   if (!token) {
     console.log('No token, redirecting to /login');
@@ -82,6 +87,6 @@ async function verifyToken(token) {
 
 export const config = {
   matcher: [
-    '/((?!api/calc-savings-interest|api/login|api/forgot-password|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api/calc-savings-interest|api/login|api/forgot-password|set-password|_next/static|_next/image|favicon.ico).*)',
   ],
 };

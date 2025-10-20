@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/database';
 import bcrypt from 'bcrypt';
 import { getCurrentUser } from '../utils/get-user';
+import { randomUUID } from 'crypto';
+import { sendSetPasswordEmail } from '../forgot-password/_email';
 
 export async function POST(request) {
   try {
@@ -11,10 +13,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { username, password, first_name, last_name, role, email, branchid, created_by_userid } = body;
+  const body = await request.json();
+  const { username, first_name, last_name, role, email, branchid, created_by_userid } = body;
 
-    if (!username || !password || !first_name || !last_name || !role) {
+    if (!username || !first_name || !last_name || !role) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -41,9 +43,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'You are not allowed to create this user role' }, { status: 403 });
     }
 
-    // Hash password
-    const saltRounds = 10;
-    const password_hash = await bcrypt.hash(password, saltRounds);
+  // Generate a random temporary password and hash it (not sent to user)
+  const tempPassword = randomUUID();
+  const saltRounds = 10;
+  const password_hash = await bcrypt.hash(tempPassword, saltRounds);
 
     // Insert user; email and branch are optional
     const result = await query(
@@ -54,7 +57,34 @@ export async function POST(request) {
     );
 
     const user = result.rows[0];
-    return NextResponse.json({ message: 'User created', user });
+
+    // Create a password reset session so user can set their own password via link
+    const resetToken = randomUUID();
+    const exp = new Date(Date.now() + 15 * 60 * 1000);
+    await query(
+      `CREATE TABLE IF NOT EXISTS password_reset_sessions (
+        token TEXT PRIMARY KEY,
+        user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
+        expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );`
+    );
+    await query('INSERT INTO password_reset_sessions (token, user_id, expires_at) VALUES ($1, $2, $3)', [resetToken, user.user_id, exp]);
+
+    // Compose link from request origin
+  const origin = request.headers.get('origin') || request.nextUrl.origin;
+    const link = `${origin}/set-password?token=${encodeURIComponent(resetToken)}`;
+
+    // Try sending email; don't fail creation if email fails
+    if (email) {
+      try {
+        await sendSetPasswordEmail({ to: email, link, appName: 'MIMS' });
+      } catch (e) {
+        console.warn('Failed to send set-password email:', e?.message || e);
+      }
+    }
+
+    return NextResponse.json({ message: 'User created. A password setup link has been emailed to the user.', user });
   } catch (err) {
     if (err?.code === '23505') {
       return NextResponse.json({ error: 'Username or email already exists' }, { status: 409 });

@@ -7,7 +7,6 @@ export default function RegisterPage() {
   const [info, setInfo] = useState('');
   const [values, setValues] = useState({
     username: '',
-    password: '',
     firstName: '',
     lastName: '',
     role: '',
@@ -43,7 +42,6 @@ export default function RegisterPage() {
 
     const payload = {
       username: values.username.trim(),
-      password: values.password,
       first_name: values.firstName.trim(),
       last_name: values.lastName.trim(),
       role: values.role,
