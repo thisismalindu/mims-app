@@ -45,8 +45,76 @@ export default function CustomerDetails({ customerId, changePage, onSelectAccoun
     }
   }, [customerId]);
 
+  // keep animation class consistent with Dashboard.jsx
+  const pulseClass = "animate-pulse";
+
   if (loading) {
-    return <div className="p-6 text-gray-600 italic">Loading customer details...</div>;
+    return (
+      <div className="px-6 py-8">
+        {/* back link skeleton */}
+        <div className={`h-4 w-40 bg-gray-200 rounded ${pulseClass}`} />
+
+        {/* title skeleton */}
+        <div className="mt-6">
+          <div className={`h-7 w-56 bg-gray-200 rounded ${pulseClass}`} />
+        </div>
+
+        {/* customer info card skeleton */}
+        <div className="mt-6 bg-white rounded-lg shadow-md p-6">
+          <div className={`h-5 w-48 bg-gray-200 rounded mb-4 ${pulseClass}`} />
+          <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} className="min-h-[56px]">
+                <div className={`h-4 w-28 bg-gray-200 rounded ${pulseClass}`} />
+                <div className={`h-5 w-40 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+              </div>
+            ))}
+            <div className="col-span-2">
+              <div className={`h-4 w-24 bg-gray-200 rounded ${pulseClass}`} />
+              <div className={`h-5 w-3/4 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+            </div>
+          </div>
+        </div>
+
+        {/* Savings Accounts section skeleton */}
+        <div className="mt-6">
+          <div className={`h-5 w-44 bg-gray-200 rounded mb-4 ${pulseClass}`} />
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className={`h-5 w-40 bg-gray-200 rounded ${pulseClass}`} />
+                    <div className={`h-4 w-56 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+                    <div className={`h-3 w-24 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+                  </div>
+                  <div className={`h-4 w-12 bg-gray-200 rounded ${pulseClass}`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Fixed Deposit Accounts section skeleton */}
+        <div className="mt-6">
+          <div className={`h-5 w-64 bg-gray-200 rounded mb-4 ${pulseClass}`} />
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className={`h-5 w-40 bg-gray-200 rounded ${pulseClass}`} />
+                    <div className={`h-4 w-56 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+                    <div className={`h-3 w-24 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+                  </div>
+                  <div className={`h-4 w-12 bg-gray-200 rounded ${pulseClass}`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

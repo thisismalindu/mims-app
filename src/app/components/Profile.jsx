@@ -41,12 +41,62 @@ export default function Profile() {
     inactive: 'bg-red-100 text-red-800 border-red-200',
   };
 
+  // skeleton animation class like Dashboard.jsx
+  const pulseClass = "animate-pulse";
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading your profile...</p>
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        {/* Header Card with Avatar (skeleton) */}
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+          <div className={`h-32 bg-gray-200 ${pulseClass}`}></div>
+          <div className="relative px-6 pb-6">
+            <div className="flex justify-between items-start">
+              <div className="relative -mt-16">
+                <div className="w-32 h-32 rounded-full bg-white p-2 shadow-xl">
+                  <div className={`w-full h-full rounded-full bg-gray-200 ${pulseClass}`}></div>
+                </div>
+              </div>
+              <div className="mt-4">
+                <div className={`h-7 w-28 bg-gray-200 rounded ${pulseClass}`} />
+              </div>
+            </div>
+            <div className="mt-4">
+              <div className={`h-8 w-64 bg-gray-200 rounded ${pulseClass}`} />
+              <div className="flex items-center gap-2 mt-2">
+                <div className={`h-6 w-28 bg-gray-200 rounded ${pulseClass}`} />
+                <div className={`h-5 w-24 bg-gray-200 rounded ${pulseClass}`} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Information Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className={`h-6 w-48 bg-gray-200 rounded mb-4 ${pulseClass}`} />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-3 mb-4">
+                <div className={`w-10 h-10 rounded-lg bg-gray-200 ${pulseClass}`} />
+                <div className="flex-grow">
+                  <div className={`h-4 w-28 bg-gray-200 rounded ${pulseClass}`} />
+                  <div className={`h-5 w-40 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className={`h-6 w-48 bg-gray-200 rounded mb-4 ${pulseClass}`} />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-start gap-3 mb-4">
+                <div className={`w-10 h-10 rounded-lg bg-gray-200 ${pulseClass}`} />
+                <div className="flex-grow">
+                  <div className={`h-4 w-28 bg-gray-200 rounded ${pulseClass}`} />
+                  <div className={`h-5 w-40 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

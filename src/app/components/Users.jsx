@@ -46,7 +46,26 @@ export default function Users() {
 			)}
 
 			{loading ? (
-				<p className="text-sm text-gray-500">Loading...</p>
+				<div className="overflow-x-auto">
+					<div className="w-full border border-gray-200 rounded-lg">
+						<div className="bg-gray-50 p-3">
+							<div className="grid grid-cols-8 gap-3">
+								{Array.from({ length: 8 }).map((_, i) => (
+									<div key={i} className="h-4 bg-gray-200 rounded animate-pulse" />
+								))}
+							</div>
+						</div>
+						<div className="divide-y divide-gray-200">
+							{Array.from({ length: 6 }).map((_, r) => (
+								<div key={r} className="grid grid-cols-8 gap-3 p-3">
+									{Array.from({ length: 8 }).map((_, c) => (
+										<div key={c} className="h-4 bg-gray-200 rounded animate-pulse" />
+									))}
+								</div>
+							))}
+						</div>
+					</div>
+				</div>
 			) : users.length === 0 ? (
 				<p className="text-sm text-gray-500">No users found.</p>
 			) : (

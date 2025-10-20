@@ -28,8 +28,72 @@ export default function AccountDetails({ accountType, accountId, changePage, onB
     }
   }, [accountType, accountId]);
 
+  // consistent animation class
+  const pulseClass = "animate-pulse";
+
   if (loading) {
-    return <div className="p-6 text-gray-600 italic">Loading account details...</div>;
+    return (
+      <div className="px-6 py-8">
+        {/* back link skeleton */}
+        <div className={`h-4 w-16 bg-gray-200 rounded ${pulseClass}`} />
+        {/* title */}
+        <div className="mt-6">
+          <div className={`h-7 w-72 bg-gray-200 rounded ${pulseClass}`} />
+        </div>
+
+        {/* Account Information */}
+        <div className="mt-6 bg-white rounded-lg shadow-md p-6">
+          <div className={`h-5 w-48 bg-gray-200 rounded mb-4 ${pulseClass}`} />
+          <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="min-h-[56px]">
+                <div className={`h-4 w-28 bg-gray-200 rounded ${pulseClass}`} />
+                <div className={`h-5 w-40 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Account Holders */}
+        <div className="mt-6 bg-white rounded-lg shadow-md p-6">
+          <div className={`h-5 w-56 bg-gray-200 rounded mb-4 ${pulseClass}`} />
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className={`h-5 w-40 bg-gray-200 rounded ${pulseClass}`} />
+                    <div className={`h-4 w-56 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+                  </div>
+                  <div className={`h-4 w-20 bg-gray-200 rounded ${pulseClass}`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Transactions */}
+        <div className="mt-6 bg-white rounded-lg shadow-md p-6">
+          <div className={`h-5 w-56 bg-gray-200 rounded mb-4 ${pulseClass}`} />
+          <div className="overflow-x-auto">
+            <div className="min-w-full">
+              <div className="grid grid-cols-6 gap-2 bg-gray-50 p-3 rounded">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className={`h-4 bg-gray-200 rounded ${pulseClass}`} />
+                ))}
+              </div>
+              {Array.from({ length: 5 }).map((_, r) => (
+                <div key={r} className="grid grid-cols-6 gap-2 p-3 border-b border-gray-200 last:border-0">
+                  {Array.from({ length: 6 }).map((_, c) => (
+                    <div key={c} className={`h-4 bg-gray-200 rounded ${pulseClass}`} />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

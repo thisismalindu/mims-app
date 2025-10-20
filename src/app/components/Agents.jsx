@@ -137,9 +137,74 @@ export default function Agents({ changePage }) {
     );
   }
 
+  // centralized animation class (same technique as Dashboard.jsx)
+  const pulseClass = "animate-pulse";
+
   if (loading) {
     return (
-      <div className="p-6 text-gray-600 italic">Loading agents...</div>
+      <div className="px-6 py-8">
+        {/* back link skeleton */}
+        <div className={`h-4 w-16 bg-gray-200 rounded ${pulseClass}`} />
+
+        {/* title skeleton */}
+        <div className="mt-6">
+          <div className={`h-7 w-44 bg-gray-200 rounded ${pulseClass}`} />
+        </div>
+
+        {/* search + filter card skeleton */}
+        <div className="mt-6 bg-white rounded-lg shadow-md p-4">
+          <div className="flex flex-col gap-4">
+            {/* Branch filter row */}
+            <div className="flex gap-4 pb-4 border-b border-gray-200">
+              <div className="flex-grow">
+                <div className={`h-4 w-28 bg-gray-200 rounded mb-2 ${pulseClass}`} />
+                <div className={`h-9 w-64 bg-gray-200 rounded ${pulseClass}`} />
+              </div>
+            </div>
+
+            {/* Search filters row */}
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Filter type select */}
+              <div className="flex-shrink-0">
+                <div className={`h-4 w-20 bg-gray-200 rounded mb-2 ${pulseClass}`} />
+                <div className={`h-9 w-48 bg-gray-200 rounded ${pulseClass}`} />
+              </div>
+              {/* Search input */}
+              <div className="flex-grow">
+                <div className={`h-4 w-14 bg-gray-200 rounded mb-2 ${pulseClass}`} />
+                <div className={`h-9 w-full bg-gray-200 rounded ${pulseClass}`} />
+              </div>
+              {/* Clear button */}
+              <div className="hidden md:flex items-end">
+                <div className={`h-9 w-20 bg-gray-200 rounded ${pulseClass}`} />
+              </div>
+            </div>
+          </div>
+
+          {/* results count skeleton */}
+          <div className="mt-3">
+            <div className={`h-4 w-56 bg-gray-200 rounded ${pulseClass}`} />
+          </div>
+        </div>
+
+        {/* list skeletons */}
+        <div className="flex flex-col gap-3 mt-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="px-4 py-3 bg-gray-50 rounded-md border border-gray-200"
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex flex-col">
+                  <div className={`h-5 w-56 bg-gray-200 rounded ${pulseClass}`} />
+                  <div className={`h-4 w-64 bg-gray-200 rounded mt-2 ${pulseClass}`} />
+                </div>
+                <div className={`h-4 w-12 bg-gray-200 rounded ${pulseClass}`} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
@@ -339,7 +404,7 @@ export default function Agents({ changePage }) {
         {/* Results Count */}
         <div className="mt-3 text-sm text-gray-600">
           {loading ? (
-            "Loading..."
+            <div className={`h-4 w-56 bg-gray-200 rounded ${pulseClass}`} />
           ) : (
             <>
               Showing {agents.length} of {allAgents.length} agent(s)

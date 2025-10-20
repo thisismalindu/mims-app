@@ -29,9 +29,49 @@ export default function Accounts({ customerId, onSelectSavingsAccount, onSelectF
     fetchAccounts();
   }, [customerId]);
 
+  // match Dashboard.jsx skeleton approach
+  const pulseClass = "animate-pulse";
+
   if (loading) {
     return (
-      <div className="p-6 text-gray-600 italic">Loading accounts...</div>
+      <div className="px-6 py-8">
+        {/* back link skeleton */}
+        <div className={`h-4 w-16 bg-gray-200 rounded ${pulseClass}`} />
+        {/* title */}
+        <div className="mt-6">
+          <div className={`h-7 w-56 bg-gray-200 rounded ${pulseClass}`} />
+        </div>
+
+        {/* Savings Accounts */}
+        <div className="mt-8">
+          <div className={`h-5 w-44 bg-gray-200 rounded mb-3 ${pulseClass}`} />
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div className={`h-5 w-64 bg-gray-200 rounded ${pulseClass}`} />
+                  <div className={`h-4 w-12 bg-gray-200 rounded ${pulseClass}`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Fixed Deposit Accounts */}
+        <div className="mt-10">
+          <div className={`h-5 w-64 bg-gray-200 rounded mb-3 ${pulseClass}`} />
+          <div className="flex flex-col gap-3">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="px-4 py-3 bg-gray-50 rounded-md border border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div className={`h-5 w-64 bg-gray-200 rounded ${pulseClass}`} />
+                  <div className={`h-4 w-12 bg-gray-200 rounded ${pulseClass}`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     );
   }
 
