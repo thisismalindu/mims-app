@@ -3,10 +3,17 @@ import React, { useEffect, useState } from "react";
 
 export default function Agents({ changePage }) {
   const [agents, setAgents] = useState([]);
+  const [allAgents, setAllAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [branches, setBranches] = useState([]);
+
+  // Filter states
+  const [searchType, setSearchType] = useState("name");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBranch, setSelectedBranch] = useState("");
 
   // Fetch current user role
   useEffect(() => {
@@ -24,6 +31,24 @@ export default function Agents({ changePage }) {
     fetchUser();
   }, []);
 
+  // Fetch branches for admin
+  useEffect(() => {
+    const fetchBranches = async () => {
+      if (userRole !== 'admin') return;
+      
+      try {
+        const res = await fetch('/api/get-branches');
+        if (res.ok) {
+          const data = await res.json();
+          setBranches(data.branches || []);
+        }
+      } catch (err) {
+        console.error('Error fetching branches:', err);
+      }
+    };
+    fetchBranches();
+  }, [userRole]);
+
   // Fetch agents
   useEffect(() => {
     const fetchAgents = async () => {
@@ -35,6 +60,7 @@ export default function Agents({ changePage }) {
           throw new Error(data.error || "Failed to fetch agents");
         }
         const data = await res.json();
+        setAllAgents(data.agents || []);
         setAgents(data.agents || []);
       } catch (err) {
         console.error("Error fetching agents:", err);
@@ -46,6 +72,50 @@ export default function Agents({ changePage }) {
 
     fetchAgents();
   }, []);
+
+  // Filter agents based on search and branch
+  useEffect(() => {
+    let filtered = allAgents;
+
+    // Apply branch filter first (admin only)
+    if (selectedBranch && userRole === 'admin') {
+      filtered = filtered.filter(a => a.branch_id && a.branch_id.toString() === selectedBranch);
+    }
+
+    // Then apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+
+      switch (searchType) {
+        case "name":
+          filtered = filtered.filter(a => 
+            `${a.first_name} ${a.last_name}`.toLowerCase().includes(query)
+          );
+          break;
+        case "agent_id":
+          filtered = filtered.filter(a => 
+            a.user_id.toString().includes(query)
+          );
+          break;
+        case "customer_id":
+          // Filter agents who created a customer with this ID
+          filtered = filtered.filter(a => 
+            a.customer_ids?.some(id => id.toString().includes(query))
+          );
+          break;
+        case "customer_name":
+          // Filter agents who created a customer with this name
+          filtered = filtered.filter(a => 
+            a.customer_names?.some(name => name.toLowerCase().includes(query))
+          );
+          break;
+        default:
+          break;
+      }
+    }
+
+    setAgents(filtered);
+  }, [searchQuery, searchType, selectedBranch, allAgents, userRole]);
 
   // Check access control
   if (userRole && !["admin", "manager"].includes(userRole)) {
@@ -184,6 +254,100 @@ export default function Agents({ changePage }) {
       <h2 className="mt-6 text-2xl font-bold tracking-tight text-gray-900">
         {userRole === 'admin' ? 'All Agents' : 'Your Agents'}
       </h2>
+
+      {/* Search and Filter Section */}
+      <div className="mt-6 bg-white rounded-lg shadow-md p-4">
+        <div className="flex flex-col gap-4">
+          {/* First Row: Branch Filter (Admin only) */}
+          {userRole === 'admin' && (
+            <div className="flex gap-4 pb-4 border-b border-gray-200">
+              <div className="flex-grow">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Filter by Branch:
+                </label>
+                <select
+                  value={selectedBranch}
+                  onChange={(e) => setSelectedBranch(e.target.value)}
+                  className="block w-full md:w-64 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+                >
+                  <option value="">All Branches</option>
+                  {branches.map((branch) => (
+                    <option key={branch.branch_id} value={branch.branch_id}>
+                      {branch.branch_name} ({String(branch.branch_id).padStart(3, '0')})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Second Row: Search Filters */}
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Filter Type Selector */}
+            <div className="flex-shrink-0">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search By:
+              </label>
+              <select
+                value={searchType}
+                onChange={(e) => {
+                  setSearchType(e.target.value);
+                  setSearchQuery("");
+                }}
+                className="block w-full md:w-48 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+              >
+                <option value="name">Agent Name</option>
+                <option value="agent_id">Agent ID</option>
+                <option value="customer_id">Customer ID</option>
+                <option value="customer_name">Customer Name</option>
+              </select>
+            </div>
+
+            {/* Search Input */}
+            <div className="flex-grow">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Search:
+              </label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={
+                  searchType === "name" ? "Enter agent name..." :
+                  searchType === "agent_id" ? "Enter agent ID..." :
+                  searchType === "customer_id" ? "Enter customer ID..." :
+                  "Enter customer name..."
+                }
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+              />
+            </div>
+
+            {/* Clear Button */}
+            {searchQuery && (
+              <div className="flex items-end">
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition font-medium"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="mt-3 text-sm text-gray-600">
+          {loading ? (
+            "Loading..."
+          ) : (
+            <>
+              Showing {agents.length} of {allAgents.length} agent(s)
+              {searchQuery && ` matching "${searchQuery}"`}
+            </>
+          )}
+        </div>
+      </div>
 
       {agents.length > 0 ? (
         <div className="flex flex-col gap-3 mt-6">

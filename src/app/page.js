@@ -6,7 +6,6 @@ import {UserIcon, HomeIcon, UsersIcon, BanknotesIcon, Cog6ToothIcon, DocumentTex
 
 import Dashboard from "./components/Dashboard";
 import Customers from "./components/Customers";
-import Accounts from "./components/Accounts";
 import Transactions from "./components/Transactions";
 import SettingsPage from "./components/SettingsPage";
 import CreateCustomer from "./components/CreateCustomer";
@@ -113,7 +112,6 @@ export default function Page() {
       return [
         ...commonStart,
         { name: "Customers", icon: <UsersIcon /> },
-        { name: "Accounts", icon: <BanknotesIcon /> },
         { name: "Transactions", icon: <DocumentTextIcon /> },
         ...commonEnd,
       ];
@@ -172,8 +170,6 @@ export default function Page() {
           changePage={changePage}
           onBack={() => changePage("CustomerDetails")}
         />;
-      case "Accounts":
-        return <Accounts />;
       case "Transactions":
         return <Transactions />;
       case "Settings":
