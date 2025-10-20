@@ -18,83 +18,51 @@ import { getCurrentUser } from "../utils/get-user";
 
 export async function POST(request) {
   try {
-    // Authentication check - only admin and manager can trigger this
-    const currentUser = await getCurrentUser(request);
-    if (!currentUser) {
-      return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 });
+    // Check if this is an automated cron job or manual trigger
+    const cronSecret = request.headers.get('X-Cron-Secret');
+    const isAutomatedJob = cronSecret === (process.env.CRON_SECRET || 'internal-cron-job');
+    
+    let currentUser = null;
+    let userBranchId = null;
+    
+    if (!isAutomatedJob) {
+      // Manual trigger - require authentication (admin only)
+      currentUser = await getCurrentUser(request);
+      if (!currentUser) {
+        return NextResponse.json({ success: false, error: "Authentication required" }, { status: 401 });
+      }
+
+      if (currentUser.role !== 'admin') {
+        return NextResponse.json({ success: false, error: "Access denied. Only admins can manually process FD interest." }, { status: 403 });
+      }
     }
 
-    if (currentUser.role !== 'admin' && currentUser.role !== 'manager') {
-      return NextResponse.json({ success: false, error: "Access denied. Only admins and managers can process FD interest." }, { status: 403 });
-    }
-
-    console.log('🔄 Starting FD interest calculation process...');
+    console.log(`🔄 Starting FD interest calculation process... (${isAutomatedJob ? 'Automated' : 'Manual'})`);
 
     // Get all active FDs where next_interest_date <= today
-    // Managers can only process FDs in their branch
+    // Admin manual trigger or automated job - all branches
     const today = new Date();
-    let fdAccountsRes;
     
-    if (currentUser.role === 'manager') {
-      // Get manager's branch_id
-      const managerRes = await query(
-        `SELECT branch_id FROM users WHERE user_id = $1`,
-        [currentUser.userID]
-      );
-      
-      if (!managerRes.rows[0] || !managerRes.rows[0].branch_id) {
-        return NextResponse.json({ 
-          success: false, 
-          error: "Manager branch information not found" 
-        }, { status: 400 });
-      }
-      
-      const managerBranchId = managerRes.rows[0].branch_id;
-      
-      fdAccountsRes = await query(
-        `SELECT 
-           fda.fixed_deposit_account_id,
-           fda.amount,
-           fda.savings_account_id,
-           fda.next_interest_date,
-           fda.closing_date,
-           fdap.interest_rate,
-           fdap.name as plan_name,
-           sa.branch_id,
-           LPAD(sa.branch_id::text, 3, '0') || LPAD(fda.fixed_deposit_account_id::text, 7, '0') as fd_account_number,
-           LPAD(sa.branch_id::text, 3, '0') || LPAD(fda.savings_account_id::text, 7, '0') as savings_account_number
-         FROM fixed_deposit_account fda
-         JOIN fixed_deposit_account_plan fdap ON fda.fixed_deposit_account_plan_id = fdap.fixed_deposit_account_plan_id
-         JOIN savings_account sa ON fda.savings_account_id = sa.savings_account_id
-         WHERE fda.status = 'active' 
-           AND fda.next_interest_date <= $1
-           AND sa.branch_id = $2
-         ORDER BY fda.fixed_deposit_account_id ASC`,
-        [today, managerBranchId]
-      );
-    } else {
-      // Admin can process all FDs
-      fdAccountsRes = await query(
-        `SELECT 
-           fda.fixed_deposit_account_id,
-           fda.amount,
-           fda.savings_account_id,
-           fda.next_interest_date,
-           fda.closing_date,
-           fdap.interest_rate,
-           fdap.name as plan_name,
-           sa.branch_id,
-           LPAD(sa.branch_id::text, 3, '0') || LPAD(fda.fixed_deposit_account_id::text, 7, '0') as fd_account_number,
-           LPAD(sa.branch_id::text, 3, '0') || LPAD(fda.savings_account_id::text, 7, '0') as savings_account_number
-         FROM fixed_deposit_account fda
-         JOIN fixed_deposit_account_plan fdap ON fda.fixed_deposit_account_plan_id = fdap.fixed_deposit_account_plan_id
-         JOIN savings_account sa ON fda.savings_account_id = sa.savings_account_id
-         WHERE fda.status = 'active' 
-           AND fda.next_interest_date <= $1
-         ORDER BY fda.fixed_deposit_account_id ASC`,
-        [today]
-      );
-    }
+    const fdAccountsRes = await query(
+      `SELECT 
+         fda.fixed_deposit_account_id,
+         fda.amount,
+         fda.savings_account_id,
+         fda.next_interest_date,
+         fda.closing_date,
+         fdap.interest_rate,
+         fdap.name as plan_name,
+         sa.branch_id,
+         LPAD(sa.branch_id::text, 3, '0') || LPAD(fda.fixed_deposit_account_id::text, 7, '0') as fd_account_number,
+         LPAD(sa.branch_id::text, 3, '0') || LPAD(fda.savings_account_id::text, 7, '0') as savings_account_number
+       FROM fixed_deposit_account fda
+       JOIN fixed_deposit_account_plan fdap ON fda.fixed_deposit_account_plan_id = fdap.fixed_deposit_account_plan_id
+       JOIN savings_account sa ON fda.savings_account_id = sa.savings_account_id
+       WHERE fda.status = 'active' 
+         AND fda.next_interest_date <= $1
+       ORDER BY fda.fixed_deposit_account_id ASC`,
+      [today]
+    );
 
     const fdAccounts = fdAccountsRes.rows;
 
@@ -143,6 +111,9 @@ export async function POST(request) {
         console.log(`  ✅ Credited Rs. ${monthlyInterest.toFixed(2)} to savings account ${fd.savings_account_number}`);
 
         // Record the interest transaction (FD interest paid to savings account)
+        // Use system user ID for automated jobs, or actual user for manual triggers
+        const performedByUserId = currentUser ? currentUser.userID : 1; // Assume user_id 1 is system/admin
+        
         const txRes = await query(
           `INSERT INTO transaction 
            (transaction_type, amount, description, savings_account_id, fixed_deposit_account_id, performed_by_user_id, status) 
@@ -154,7 +125,7 @@ export async function POST(request) {
             'FD interest',
             fd.savings_account_id,
             null,
-            currentUser.userID,
+            performedByUserId,
             'active'
           ]
         );
@@ -250,10 +221,11 @@ export async function POST(request) {
 export async function GET() {
   return NextResponse.json({
     success: true,
-    info: 'POST to this endpoint to process FD interest calculations. Only admins and managers can trigger this process.',
+    info: 'POST to this endpoint to process FD interest calculations. Only admins can manually trigger this process. Automated processing runs monthly.',
     calculation: 'Monthly Interest = (FD Amount × Annual Interest Rate × 30) / (365 × 100)',
     cycle: '30-day periods',
     crediting: 'Interest is credited directly to the linked savings account',
-    transactions: 'Each interest credit is recorded as a separate transaction'
+    transactions: 'Each interest credit is recorded as a separate transaction',
+    automation: 'Runs automatically on the 1st of each month at 00:05'
   });
 }
