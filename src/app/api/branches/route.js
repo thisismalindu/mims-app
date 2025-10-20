@@ -1,6 +1,27 @@
-// src/app/api/create-branch/route.js
+// src/app/api/branches/route.js
 import { query } from '@/lib/database';
 import { getCurrentUser } from '../utils/get-user';
+
+export async function GET(request) {
+  try {
+    const result = await query(
+      `SELECT branch_id, branch_name, address, phone_number, status, created_at
+       FROM branch
+       ORDER BY branch_id DESC`
+    );
+
+    return new Response(
+      JSON.stringify({ branches: result.rows }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error('Error fetching branches:', error);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+}
 
 export async function POST(request) {
   try {

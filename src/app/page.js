@@ -12,6 +12,7 @@ import SettingsPage from "./components/SettingsPage";
 import CreateCustomer from "./components/CreateCustomer";
 import InitiateTransaction from "./components/InitiateTransaction";
 import Users from "./components/Users";
+import Branches from "./components/Branches";
 import CreateAccountPlan from "./components/CreateAccountPlan";
 
 import CreateFixedDepositPlan from "./components/CreateFixedDepositPlan";
@@ -158,6 +159,8 @@ export default function Page() {
         return <RequestReport changePage={changePage} />;
       case "Users":
         return <Users changePage={changePage} />;
+      case "Branches":
+        return <Branches changePage={changePage} />;
       case "Profile":
         return <Profile />;
       case "CreateBranch":
