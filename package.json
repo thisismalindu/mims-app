@@ -5,8 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "db:apply": "node scripts/apply-sql.js"
+    "start": "next start"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

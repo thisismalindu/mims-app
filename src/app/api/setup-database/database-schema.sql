@@ -79,7 +79,6 @@ CREATE TABLE login_log (
 
 CREATE TABLE customer (
   customer_id BIGSERIAL PRIMARY KEY,
-  branch_id BIGSERIAL REFERENCES branch(branch_id),
   first_name text,
   last_name text,
   nic_number text UNIQUE,
@@ -287,7 +286,7 @@ BEGIN
   END LOOP;
 END$$;
 
--- admin user
+-- root user
 INSERT INTO users (username, password_hash, first_name, last_name, role, status)
 VALUES ('admin', '<adminhash>', 'AdminUserPerson', 'Btrustable', 'admin', 'active');
 
