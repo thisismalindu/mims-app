@@ -87,6 +87,7 @@ async function verifyToken(token) {
 
 export const config = {
   matcher: [
+    '/((?!api/login|_next/static|_next/image|favicon.ico).*)',
     '/((?!api/calc-savings-interest|api/login|api/forgot-password|set-password|_next/static|_next/image|favicon.ico).*)',
   ],
 };

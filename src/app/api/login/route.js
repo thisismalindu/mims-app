@@ -25,12 +25,6 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Block login for inactive users
-    if (login.status !== 'active') {
-        await logFailedLoginAttempt(username);
-        return NextResponse.json({ error: 'Account is inactive' }, { status: 403 });
-    }
-
     const isPasswordValid = await bcrypt.compare(password, login.password_hash);
     if (!isPasswordValid) {
         await logFailedLoginAttempt(username);
