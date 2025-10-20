@@ -139,7 +139,7 @@ export async function GET(request) {
               [account.amount, account.savings_account_id]
             );
 
-            // Record the transfer transaction
+            // Record the transfer transaction (reference savings account where amount is transferred)
             await query(
               `INSERT INTO transaction 
                (transaction_type, amount, description, savings_account_id, fixed_deposit_account_id, status) 
@@ -147,10 +147,10 @@ export async function GET(request) {
               [
                 'transfer',
                 account.amount,
-                'Fixed deposit closure',
+                'FD closure transfer',
                 account.savings_account_id,
-                accountId,
-                'completed'
+                null,
+                'active'
               ]
             );
 
