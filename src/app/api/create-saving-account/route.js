@@ -1,60 +1,59 @@
-import { query } from '@/lib/database';
-import { getCurrentUser } from '../utils/get-user';
+import { query } from "@/lib/database";
+import { getCurrentUser } from "../utils/get-user";
 
 export async function POST(request) {
   try {
     const data = await request.json();
+    const { account_plan_name, branch_id } = data;
 
-    const {
-      customer_id,
-      account_name,
-      initial_deposit,
-      interest_rate,
-      account_type,
-    } = data;
-
-    // Validate required fields
-    if (!customer_id || !account_name || !initial_deposit || !interest_rate || !account_type) {
+    if (!account_plan_name) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Missing account plan name" }),
+        { status: 400 }
       );
     }
 
-    console.log("****/api/create-saving-account/: currentUser: ", await getCurrentUser(request));
-
     const user = await getCurrentUser(request);
-    const created_by_user_id = user?.userID;
+    const created_by_user_id = user?.userID || null;
 
-    // Insert into saving_account table
+    // Fetch plan ID
+    const planResult = await query(
+      `SELECT savings_account_plan_id
+       FROM savings_account_plan
+       WHERE name = $1 AND status = 'active'`,
+      [account_plan_name]
+    );
+
+    if (planResult.rows.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or inactive plan" }),
+        { status: 400 }
+      );
+    }
+
+    const savings_account_plan_id = planResult.rows[0].savings_account_plan_id;
+
+    // Insert new savings account
     const result = await query(
-      `INSERT INTO saving_account 
-        (customer_id, account_name, balance, interest_rate, account_type, created_by_user_id, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW())
-       RETURNING account_id`,
-      [
-        customer_id,
-        account_name,
-        initial_deposit,
-        interest_rate,
-        account_type,
-        created_by_user_id || null,
-      ]
+      `INSERT INTO savings_account
+        (savings_account_plan_id, balance, branch_id, status, created_by_user_id, created_at)
+       VALUES ($1, 0, $2, 'active', $3, NOW())
+       RETURNING savings_account_id`,
+      [savings_account_plan_id, branch_id || 1, created_by_user_id]
     );
 
     return new Response(
       JSON.stringify({
-        message: 'Saving account created successfully',
+        message: "Savings account created successfully",
         account: result.rows[0],
       }),
-      { status: 201, headers: { 'Content-Type': 'application/json' } }
+      { status: 201 }
     );
-
   } catch (error) {
-    console.error('Error creating saving account:', error);
+    console.error("Error creating savings account:", error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: "Internal server error" }),
+      { status: 500 }
     );
   }
 }

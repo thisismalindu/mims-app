@@ -1,10 +1,26 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function CreateSavingAccount({ changePage }) {
-
   const [loading, setLoading] = useState(false);
   const [ownershipType, setOwnershipType] = useState("primary");
+  const [accountPlans, setAccountPlans] = useState([]);
+
+  // Fetch account plans from backend
+  useEffect(() => {
+    const fetchAccountPlans = async () => {
+      try {
+        const res = await fetch("/api/get-account-plans");
+        if (!res.ok) throw new Error("Failed to fetch account plans");
+        const data = await res.json();
+        setAccountPlans(data.plans || []);
+      } catch (err) {
+        console.error("Error loading account plans:", err);
+      }
+    };
+
+    fetchAccountPlans();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,7 +29,6 @@ export default function CreateSavingAccount({ changePage }) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
 
-    // Remove joint_customer_id if not joint
     if (ownershipType !== "joint") {
       delete data.joint_customer_id;
     }
@@ -23,15 +38,11 @@ export default function CreateSavingAccount({ changePage }) {
     try {
       const response = await fetch("/api/create-saving-account", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to create saving account");
-      }
+      if (!response.ok) throw new Error("Failed to create saving account");
 
       alert("Saving account created successfully!");
       e.target.reset();
@@ -42,6 +53,7 @@ export default function CreateSavingAccount({ changePage }) {
     }
   };
 
+  // Dynamic fields
   const fields = [
     {
       label: "Ownership Type",
@@ -60,22 +72,23 @@ export default function CreateSavingAccount({ changePage }) {
     ...(ownershipType === "joint"
       ? [{ label: "Second Customer ID", id: "jointCustomerId", name: "joint_customer_id", type: "text", required: true }]
       : []),
-    { 
-      label: "Account Plan Name", 
-      id: "accountPlanName", 
-      name: "account_plan_name", 
-      type: "select", 
-      required: true, 
-      options: [
-        { label: "None", value: "none" },
-        // Later, load dynamically from database
-      ],
+    {
+      label: "Account Plan",
+      id: "accountPlanName",
+      name: "account_plan_name",
+      type: "select",
+      required: true,
+      options: accountPlans.length > 0
+        ? accountPlans.map((plan) => ({
+            label: plan.name,
+            value: plan.name,
+          }))
+        : [{ label: "No plans available", value: "none" }],
     },
   ];
 
   return (
     <div className="px-6 py-12 lg:px-8">
-
       <a
         onClick={() => changePage("Dashboard")}
         className="rounded-md font-medium tracking-tight text-blue-500 cursor-pointer hover:text-blue-600"
@@ -91,10 +104,7 @@ export default function CreateSavingAccount({ changePage }) {
         {fields.map((field) => (
           <div key={field.id} className="flex flex-col mb-4">
             <div className="flex items-center">
-              <label
-                className="text-sm/6 font-medium text-gray-400"
-                htmlFor={field.id}
-              >
+              <label className="text-sm/6 font-medium text-gray-400" htmlFor={field.id}>
                 {field.label}:
               </label>
               {field.required && <p className="text-red-500 font-medium">*</p>}
@@ -129,9 +139,7 @@ export default function CreateSavingAccount({ changePage }) {
         ))}
 
         <div>
-          <p className="text-sm/6 my-4 italic text-red-500">
-            * Required fields
-          </p>
+          <p className="text-sm/6 my-4 italic text-red-500">* Required fields</p>
         </div>
 
         <button

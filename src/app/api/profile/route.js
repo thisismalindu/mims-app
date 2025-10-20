@@ -15,9 +15,31 @@ export async function GET(request) {
 
     const result = await query(
       `
-      SELECT u.username AS name, u.email, u.role, b.branch_name AS branch
+      SELECT 
+        u.user_id,
+        u.username, 
+        u.first_name,
+        u.last_name,
+        u.email, 
+        u.role, 
+        u.status,
+        u.branch_id,
+        u.created_at,
+        u.created_by_user_id,
+        b.branch_name,
+        b.address as branch_address,
+        creator.first_name as created_by_first_name,
+        creator.last_name as created_by_last_name,
+        creator.role as created_by_role,
+        (SELECT COUNT(*) FROM customer WHERE created_by_user_id = u.user_id) as total_customers_created,
+        (SELECT COUNT(*) FROM users WHERE created_by_user_id = u.user_id AND role = 'agent') as total_agents_created,
+        (SELECT COUNT(*) FROM customer) as total_customers_in_system,
+        (SELECT COUNT(*) FROM users WHERE role = 'agent') as total_agents_in_system,
+        (SELECT COUNT(*) FROM users WHERE role = 'manager') as total_managers_in_system,
+        (SELECT COUNT(*) FROM branch) as total_branches_in_system
       FROM users u
       LEFT JOIN branch b ON u.branch_id = b.branch_id
+      LEFT JOIN users creator ON u.created_by_user_id = creator.user_id
       WHERE u.username = $1
       `,
       [user.username]
