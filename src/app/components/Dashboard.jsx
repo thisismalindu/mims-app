@@ -72,13 +72,6 @@ export default function Dashboard({ changePage }) {
       allowedRoles: ["admin", "manager"],
     },
     {
-      name: "Generate Reports",
-      action: "GenerateReports",
-      description: "View and generate system reports",
-      category: "Reporting",
-      allowedRoles: ["admin", "manager"],
-    },
-    {
       name: "Create Account Plan",
       action: "CreateAccountPlan",
       description: "Define a new account plan",
