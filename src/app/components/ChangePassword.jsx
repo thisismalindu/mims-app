@@ -75,6 +75,7 @@ export default function ChangePassword({ onBack }) {
             <button type="submit" disabled={submitting} className={`rounded-md px-3 py-1.5 text-sm font-semibold text-white ${submitting ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-500'}`}>
               {submitting ? 'Updating…' : 'Update Password'}
             </button>
+            <a href="/forgot-password" className="text-sm font-semibold text-blue-500 hover:text-blue-400 ml-2">Forgot password?</a>
           </div>
         </form>
       </div>

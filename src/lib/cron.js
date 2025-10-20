@@ -6,7 +6,7 @@ import fetch from 'node-fetch';
 cron.schedule('5 0 1 * *', async () => {
   console.log('📅 Running automated monthly interest calculation...');
   try {
-    const res = await fetch('http://localhost:3000/api/calc-savings-interest', {
+    const res = await fetch('/api/calc-savings-interest', {
       method: 'POST'
     });
     const data = await res.json();
