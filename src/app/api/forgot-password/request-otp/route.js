@@ -69,6 +69,7 @@ export async function POST(request) {
     // Email link (best-effort)
     try {
       if (user.email) {
+        console.log('Sending set-password email to', user.email)
         await sendSetPasswordEmail({ to: user.email, link, appName: 'MIMS' })
       }
     } catch (err) {

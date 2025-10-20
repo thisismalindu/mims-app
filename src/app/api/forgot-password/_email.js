@@ -17,6 +17,7 @@ export async function sendSetPasswordEmail({ to, link, appName = 'MIMS' }) {
   const resend = getResend()
   if (!resend) return
   const from = process.env.EMAIL_FROM || 'onboarding@resend.dev'
+  console.log("Sending from", from)
   const subject = `${appName} account setup`
   const html = `
     <div style="font-family:Arial,sans-serif;font-size:14px;color:#111">
@@ -32,4 +33,5 @@ export async function sendSetPasswordEmail({ to, link, appName = 'MIMS' }) {
   `
   const { error } = await resend.emails.send({ from, to, subject, html })
   if (error) throw new Error(error.message || 'Failed to send set-password email')
+    console.log('Set-password email sent to', to)
 }

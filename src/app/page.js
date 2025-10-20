@@ -27,7 +27,6 @@ import AccountDetails from "./components/AccountDetails";
 import Accounts from "./components/Accounts";
 import ProcessFDInterest from "./components/ProcessFDInterest";
 import Reports from "./components/Reports";
-import InterestDistributions from "./components/InterestDistributions";
 
 export default function Page() {
 
