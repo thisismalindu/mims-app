@@ -21,6 +21,7 @@ import RequestReport from "./components/RequestReport";
 import Profile from "./components/Profile";
 import CreateBranch from "./components/CreateBranch";
 import Agents from "./components/Agents";
+import Branches from "./components/Branches";
 import CustomerDetails from "./components/CustomerDetails";
 import AccountDetails from "./components/AccountDetails";
 import ProcessFDInterest from "./components/ProcessFDInterest";
@@ -199,6 +200,8 @@ export default function Page() {
         return <Profile />;
       case "CreateBranch":
         return <CreateBranch changePage={changePage} />;
+      case "Branches":
+        return <Branches changePage={changePage} />;
       case "CreateAgent":
         window.location.replace("/register");
         return null;
