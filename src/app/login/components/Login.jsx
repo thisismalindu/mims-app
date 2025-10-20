@@ -65,7 +65,7 @@ export default function Login({ action, username, password, setUsername, setPass
                                 Password
                             </label>
                             <div className="text-sm">
-                                <a tabIndex={3} href="#" className="font-semibold text-blue-400 hover:text-blue-300">
+                                <a tabIndex={3} href="/forgot-password" className="font-semibold text-blue-400 hover:text-blue-300">
                                     Forgot password?
                                 </a>
                             </div>

@@ -65,7 +65,7 @@ CREATE TABLE users (
   last_name text NOT NULL,
   role user_type NOT NULL,
   status status_enum NOT NULL DEFAULT 'active',
-  email text UNIQUE,
+  email text,
   created_by_user_id BIGINT REFERENCES users(user_id),
   branch_id BIGINT REFERENCES branch(branch_id),
   created_at timestamptz DEFAULT now(),
