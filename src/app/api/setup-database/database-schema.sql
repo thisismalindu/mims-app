@@ -84,6 +84,7 @@ CREATE TABLE login_log (
 
 CREATE TABLE customer (
   customer_id BIGSERIAL PRIMARY KEY,
+  branch_id BIGSERIAL REFERENCES branch(branch_id),
   first_name text,
   last_name text,
   nic_number text UNIQUE,
