@@ -1,10 +1,9 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 export default function SetPasswordPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [token, setToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -12,9 +11,16 @@ export default function SetPasswordPage() {
   const [working, setWorking] = useState(false);
 
   useEffect(() => {
-    const t = searchParams.get('token') || '';
-    setToken(t);
-  }, [searchParams]);
+    // Read token from the actual browser URL to avoid using next/navigation
+    // hooks during pre-render which require a Suspense boundary.
+    try {
+      const params = new URLSearchParams(window.location.search || '');
+      const t = params.get('token') || '';
+      setToken(t);
+    } catch (e) {
+      // noop in non-browser environments
+    }
+  }, []);
 
   const onSubmit = async (e) => {
     e.preventDefault();

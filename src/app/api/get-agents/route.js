@@ -46,7 +46,11 @@ export async function GET(request) {
       `;
     } else {
       // Manager can only see agents they created with their customer count (no creator info)
-      const userId = currentUser.userID || currentUser.user_id;
+      const userId = currentUser.user_id || currentUser.userID;
+      if (!userId) {
+        console.error('get-agents: missing user id on currentUser', { currentUser });
+        return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+      }
       sql = `
         SELECT 
           u.user_id, 
@@ -69,9 +73,13 @@ export async function GET(request) {
       params = [userId];
     }
 
-    const { rows } = await query(sql, params);
-
-    return NextResponse.json({ success: true, agents: rows });
+    try {
+      const { rows } = await query(sql, params);
+      return NextResponse.json({ success: true, agents: rows });
+    } catch (err) {
+      console.error('get-agents: DB query failed', { err: err?.message || err, sql, params });
+      throw err;
+    }
   } catch (error) {
     console.error("get-agents error:", error);
     return NextResponse.json(

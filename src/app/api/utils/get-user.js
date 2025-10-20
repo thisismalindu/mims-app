@@ -6,21 +6,27 @@ export async function getCurrentUser(request) {
     const token = request.cookies.get('auth_token')?.value
     if (!token) return null
 
-    console.log('****/api/utils/get-user: Token: ', token)
+    // Keep a concise log for debugging (avoid printing secret content in prod)
+    console.log('get-user: token present')
 
     const { payload } = await jwtVerify(
       token,
       new TextEncoder().encode(process.env.JWT_SECRET)
     )
-    const userId = Number(payload.userId) 
-    if (isNaN(userId)) return null  
+
+    // Normalize IDs: provide both numeric and original forms to be defensive
+    const user_id = Number(payload.userId);
+    if (isNaN(user_id)) return null;
 
     return {
       username: payload.username,
+      // both shapes used around the codebase; provide both to avoid undefined
       userID: payload.userId,
+      user_id,
       role: payload.role,
     }
-  } catch {
+  } catch (err) {
+    console.debug('get-user: token invalid or missing', err?.message || err)
     return null
   }
 }
