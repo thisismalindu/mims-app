@@ -307,3 +307,13 @@ INSERT INTO report_type (key, name, description) VALUES
   ('customer_activity', 'Customer Activity', 'Customer deposits, withdrawals, and net balance over a period')
 ON CONFLICT (key) DO NOTHING;
 
+-- account plans
+ALTER TABLE savings_account_plan ADD COLUMN maximum_age_required integer;
+INSERT INTO savings_account_plan
+(name, min_balance_required, minimum_age_required, maximum_age_required, interest_rate, description, status, created_at)
+VALUES
+('Children', 0, 0, 15, 12.000000, 'Savings plan for children below 13 years with no minimum balance.', 'active', NOW()),
+('Teen', 500, 13, 19, 11.000000, 'Savings plan for teenagers aged 13–17 with a low minimum balance.', 'active', NOW()),
+('Adult', 1000, 18, 59, 10.000000, 'Savings plan for adults aged 18–59 with a standard interest rate.', 'active', NOW()),
+('Senior', 1000, 60, NULL, 13.000000, 'Savings plan for senior citizens aged 60 and above.', 'active', NOW()),
+('Joint', 5000, 18, NULL, 7.000000, 'Joint savings account with shared ownership and standard benefits.', 'active', NOW());
